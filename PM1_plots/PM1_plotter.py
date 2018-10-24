@@ -6,8 +6,9 @@ from collections import defaultdict
 
 #the purpose of this class is to model and collect the data required of a plot and then write to a file for retention and subsequent plotting
 
-#hgmd_username = "1"
-#hgmd_password = "123"
+#hgmd_username = "1" #hgmd_username = input("\nEnter HGMD Pro licence username: ")
+#hgmd_password = "123" hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ") 
+
 
 class Graph_object():
 	
