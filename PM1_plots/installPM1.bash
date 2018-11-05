@@ -1,7 +1,20 @@
 #!/bin/bash
-#You may install this software by downloading the compressed file via Github webpage or by its URL via wget <URL>, or using git with the command 
-git clone https://github.com/Lucioric2000/snippets
-cd snippets/PM1_plots
+#You may install this software by downloading the compressed file via Github webpage or by its URL via wget <URL>, or using git with the command
+if [[ `expr match "$(pwd)" '.*\(PM1_plots\)'` = "PM1_plots" ]]
+then
+    echo "Already in PM1_plots folder."
+elif [[ `expr match "$(pwd)" '.*\(snippets\)'` = "snippets" ]]
+then
+	echo "Already in snippets folder."
+	cd PM1_plots
+else
+	echo "Not in snippets nor PM1_plots folder."
+	git clone https://github.com/Lucioric2000/snippets
+	cd snippets/PM1_plots
+fi
+
+#git clone https://github.com/Lucioric2000/snippets
+#cd snippets/PM1_plots
 
 #For the first installs in the Centos server you should execute:
 echo -e "[google-chrome]\\nname=google-chrome\\nbaseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64\\nenabled=1\\ngpgcheck=1\\ngpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub"|sudo tee /etc/yum.repos.d/google-chrome.repo
@@ -12,7 +25,7 @@ function conda_install(){
 	#Install the Miniconda Python pachages manager
 	#As is is a complex procedure, it is packed in a function. If you need to re-run this script without reinstalling Anaconda,
 	#comment out the conda_install() function call several lines below.
-	conda_home=/opt/conda
+	conda_home=/srv/conda
 	python_version=3
 	echo "Next, the Miniconda package will be downloaded and installed"
 	wget https://repo.continuum.io/miniconda/Miniconda${python_version}-latest-Linux-x86_64.sh
@@ -33,11 +46,11 @@ function conda_install(){
 condabin=`which conda`
 if [ -z $condabin ]
 then
-	conda_home=/opt/conda
+	conda_home=/srv/conda
 	conda_install
 else 
     conda_home=${condabin%/bin/conda}
-    echo "Conda installation found at $conda_home. Script will use tht installation."
+    echo "Conda installation found at $conda_home. Script will use that installation."
 fi
 source activate base
 sudo ${conda_home}/bin/conda install -c bioconda numpy pandas pysam
