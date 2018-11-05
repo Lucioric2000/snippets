@@ -52,7 +52,7 @@ else
     conda_home=${condabin%/bin/conda}
     echo "Conda installation found at $conda_home. Script will use that installation."
 fi
-source activate base
+#source activate base
 sudo ${conda_home}/bin/conda install -c bioconda numpy pandas pysam
 sudo ${conda_home}/bin/conda install -c conda-forge mechanicalsoup selenium
 sudo ${conda_home}/bin/conda install pymongo flask cython lxml
