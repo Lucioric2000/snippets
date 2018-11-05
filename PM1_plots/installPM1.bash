@@ -9,7 +9,24 @@ then
 	cd PM1_plots
 else
 	echo "Not in snippets nor PM1_plots folder."
-	git clone https://github.com/Lucioric2000/snippets
+	repository_dir=/srv/qgen/snippets
+    if [[ -d "${repository_dir}" ]]
+    then
+        cd "${repository_dir}/PM1_plots" && ./installPM1.bash $@
+        exit
+    elif [[ -e "${repository_dir}" ]]
+    then
+        echo "File ${repository_dir} exists but it is not a directory, thus we can not create a directory with that path tho hold the software reposotory. \
+        See if it is safe to delete or move it, and then execute again this script."
+    else
+        sudo mkdir -p /srv/qgen
+        sudo chmod -R 777 /srv/qgen
+        cd /srv/qgen && git clone --recursive https://github.com/Lucioric2000/snippets
+        cd "${repository_dir}/PM1_plots" && ./installPM1.bash $@
+        exit
+    fi
+
+	git clone https://github.com/Lucioric2000/snippets /srv/qgen/snippets
 	cd snippets/PM1_plots
 fi
 
@@ -41,7 +58,8 @@ function conda_install(){
     mv -f ~/.bashrc.new.qiagen ~/.bashrc
     #Make the updated shell path available in this session:
     source ~/.bashrc
-    source activate base
+    conda_env='base'
+    source ${conda_home}/bin/activate ${conda_env}
 }
 condabin=`which conda`
 if [ -z $condabin ]
@@ -51,22 +69,32 @@ then
 else 
     conda_home=${condabin%/bin/conda}
     echo "Conda installation found at $conda_home. Script will use that installation."
+    conda_env='python37'
+    ${conda_home}/bin/conda create -n ${conda_env} python=3.7 &> /dev/null
+    source ${conda_home}/bin/activate ${conda_env} && echo Activated conda environment ${conda_env} || ( \
+    	${conda_home}/bin/conda create -n ${conda_env} python=3.7; \
+    	source ${conda_home}/bin/activate ${conda_env}; \
+    	echo Created and activated the conda environment ${conda_env} )
 fi
 #source activate base
-sudo ${conda_home}/bin/conda install -c bioconda numpy pandas pysam
-sudo ${conda_home}/bin/conda install -c conda-forge mechanicalsoup selenium
-sudo ${conda_home}/bin/conda install pymongo flask cython lxml
+sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c bioconda numpy pandas pysam
+sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c conda-forge mechanicalsoup selenium
+sudo ${conda_home}/bin/conda install -y -n ${conda_env} pymongo flask cython lxml requests
+sudo ${conda_home}/bin/pip install -U pip
 sudo ${conda_home}/bin/pip install flask-runner flask-errormail
+gppplace=$(which gnuplot) && echo "Gnuplot was found at $gppplace; using that gnuplot" || (
+	echo uno; \
+	echo dos ) 
 #Gnuplot installation
-wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz
-tar -xvzf gnuplot-5.2.4.tar.gz
-cd gnuplot-5.2.4
-./configure
-make
-make check
-sudo make install
-cd ..
-sudo rm -rf gnuplot-5.2.4*
+#wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz
+#tar -xvzf gnuplot-5.2.4.tar.gz
+#cd gnuplot-5.2.4
+#./configure
+#make
+#make check
+#sudo make install
+#cd ..
+#sudo rm -rf gnuplot-5.2.4*
 
 #Chrome driver (For Selenium)
 wget https://chromedriver.storage.googleapis.com/2.40/chromedriver_linux64.zip
