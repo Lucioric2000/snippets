@@ -1,5 +1,6 @@
 #!/bin/bash
 #You may install this software by downloading the compressed file via Github webpage or by its URL via wget <URL>, or using git with the command
+yum -y install sudo git
 if [[ `expr match "$(pwd)" '.*\(PM1_plots\)'` = "PM1_plots" ]]
 then
     echo "Already in PM1_plots folder."
@@ -50,7 +51,7 @@ function conda_install(){
 	wget https://repo.continuum.io/miniconda/Miniconda${python_version}-latest-Linux-x86_64.sh
 	chmod +x Miniconda${python_version}-latest-Linux-x86_64.sh
 	echo "You should install Miniconda to the default path there appears"
-	sudo sh Miniconda${python_version}-latest-Linux-x86_64.sh -p ${conda_home}
+	sudo sh Miniconda${python_version}-latest-Linux-x86_64.sh -p ${conda_home} -u -b
 	rm Miniconda${python_version}-latest-Linux-x86_64.sh
 	#Make the updated shell path available in this session:
 	export PATH="$PATH:${conda_home}"
