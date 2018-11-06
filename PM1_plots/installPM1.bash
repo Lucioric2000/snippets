@@ -72,13 +72,13 @@ then
 else 
     conda_home=${condabin%/bin/conda}
     echo "Conda installation found at $conda_home. Script will use that installation."
-    conda_env='python37'
-    ${conda_home}/bin/conda create -n ${conda_env} python=3.7 &> /dev/null
-    source ${conda_home}/bin/activate ${conda_env} && echo Activated conda environment ${conda_env} || ( \
-    	${conda_home}/bin/conda create -n ${conda_env} python=3.7; \
-    	source ${conda_home}/bin/activate ${conda_env}; \
-    	echo Created and activated the conda environment ${conda_env} )
 fi
+conda_env='python37'
+source ${conda_home}/bin/activate ${conda_env} && echo Activated conda environment ${conda_env} || ( \
+    #Conda environment not found: creating it
+    ${conda_home}/bin/conda create -n ${conda_env} python=3.7; \
+    source ${conda_home}/bin/activate ${conda_env}; \
+    echo Created and activated the conda environment ${conda_env} )
 #source activate base
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c bioconda numpy pandas pysam
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c conda-forge mechanicalsoup selenium
@@ -86,8 +86,8 @@ sudo ${conda_home}/bin/conda install -y -n ${conda_env} pymongo flask cython lxm
 sudo ${conda_home}/bin/pip install -U pip
 sudo ${conda_home}/bin/pip install flask-runner flask-errormail sendgrid
 #Gnuplot installation
-gpplace=$(which gnuplot) && echo "Gnuplot was found at $gpplace; using that gnuplot" || (
-	wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz; \
+gpplace=$(which gnuplot) &>/dev/null && echo "Gnuplot was found at $gpplace; using that gnuplot" || (
+    echo "Installing gnuplot..."; wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz; \
 	./configure; make; \
 	sudo make install; \
 	#make check; \
