@@ -179,11 +179,15 @@ class Graph_object():
             elif len(this_type_column) > int(length)+1:
                 print(k + " feature exceeds length of protein by more than one amino acid or multiple " + k + " features overlap. Program will now close")
                 sys.exit()
-            np_array = np.array(this_type_column, dtype=np.float)
-            arrays_to_save.append(np_array)
-        result_array = np.empty((0, int(length)))
-        for item in arrays_to_save:
-            result_array = np.append(result_array, [item], axis=0)
+            #print("ttc",this_type_column)
+            if len(this_type_column)>0:
+                np_array = np.array(this_type_column, dtype=np.float)
+                arrays_to_save.append(np_array)
+        #print("asts",arrays_to_save)
+        if len(arrays_to_save)>0:
+            result_array=np.concatenate(arrays_to_save)
+        else:
+            result_array = np.empty((0, int(length)))
         with open(self.plotting_file, 'wb') as f:
             headers = '{0}'.format('\t'.join(self.uniprot_columns))
             f.write(bytes(headers, 'utf-8') + bytes('\n', 'utf-8'))

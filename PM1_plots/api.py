@@ -1,4 +1,5 @@
-import requests, json, sys, re, time, mechanicalsoup, fnmatch
+import requests, json, sys, re, time, mechanicalsoup, fnmatch, traceback, sendgrid, base64
+from sendgrid.helpers.mail import Email, Content, Mail, Attachment
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.remote.command import Command
@@ -248,18 +249,49 @@ class HGMD_pro():
         time.sleep(2)
         try:
             soup = self.form_finder(browser, self.gene)
-        except:
-            print("\nHGMD exception executed")
+        except Exception as exc:
+            print("\nHGMD exception executed: {0}".format(traceback.format_exc()))
             print("Check HGMD username and password are correct and try again.\nAlternatively check you are not already logged in to HGMD with a web browser:\nhttps://portal.biobase-international.com/cgi-bin/portal/login.cgi\n")
             sys.exit()
         return soup
+    def email_htmls_with_error(self,htmls,error,subject):
+        #SenfGrid Key for sengding mails with debug info to me
+        sendgrid_key="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"
+        sg = sendgrid.SendGridAPIClient(apikey=sendgrid_key)
+        from_email = Email("lucioric@freelancecuernavaca.com")
+        to_email = Email("lucioric@freelancecuernavaca.com")
+        content = Content("text/plain", "{0}. During the analysis, the following error happened: {1}".format(subject,traceback.format_exc()))
+        mail = Mail(from_email, subject, to_email, content)
+        for (htmlname,htmlcontents) in htmls.items():
+            att=Attachment()
+            print("hc",htmlcontents)
+            if isinstance(htmlcontents,str):
+                htmlcontents=htmlcontents.encode("UTF-8")
+            att.content=base64.b64encode(htmlcontents).decode()
+            #att.content=htmlcontents
+            att.type="text/html"
+            att.filename=htmlname
+            att.disposition="attachment"
+            mail.add_attachment(att)
+        response = sg.client.mail.send.post(request_body=mail.get())
+        print("mail_sending_status:",response)
+        print("status_code:",response.status_code)
+        print("response_body:",response.body)
+        print("response_headers:",response.headers)
+        raise error
+
       
     def form_finder(self, browser, gene):
         gene_search = browser.get("https://portal.biobase-international.com/hgmd/pro/gene.php?gene=" + gene)
         time.sleep(0.5)
         soup = BeautifulSoup(gene_search.content)
         form = soup.find("form", attrs={ "action" : "all.php" })
-        gene_id_element = form.find("input", attrs={"name" : "gene_id"})
+        try:
+            gene_id_element = form.find("input", attrs={"name" : "gene_id"})
+        except Exception as exc:
+            htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
+            subject = "Gene page {0} for debug".format(gene)
+            self.email_htmls_with_error(htmls,exc,subject)
         gene_id_value = gene_id_element['value']
         trans_element = form.find("input", attrs={"name" : "refcore"})
         HGMD_transcript_id = trans_element['value']
@@ -267,6 +299,7 @@ class HGMD_pro():
         params = {"gene" : self.gene, "inclsnp" : "N", "base" : "Z", "refcore" : HGMD_transcript_id, "gene_id" : gene_id_value, "database" : "Get all mutations"}
         url = "https://portal.biobase-international.com/hgmd/pro/all.php"
         response = browser.post(url, data=params)
+        time.sleep(0.5)
         soup = BeautifulSoup(response.content)
         response.close()
         return soup

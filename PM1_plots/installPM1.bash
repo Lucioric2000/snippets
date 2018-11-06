@@ -3,10 +3,12 @@
 if [[ `expr match "$(pwd)" '.*\(PM1_plots\)'` = "PM1_plots" ]]
 then
     echo "Already in PM1_plots folder."
+    git pull origin master
 elif [[ `expr match "$(pwd)" '.*\(snippets\)'` = "snippets" ]]
 then
 	echo "Already in snippets folder."
 	cd PM1_plots
+	git pull origin master
 else
 	echo "Not in snippets nor PM1_plots folder."
 	repository_dir=/srv/qgen/snippets
@@ -81,11 +83,14 @@ sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c bioconda numpy pandas
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c conda-forge mechanicalsoup selenium
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} pymongo flask cython lxml requests
 sudo ${conda_home}/bin/pip install -U pip
-sudo ${conda_home}/bin/pip install flask-runner flask-errormail
-gppplace=$(which gnuplot) && echo "Gnuplot was found at $gppplace; using that gnuplot" || (
-	echo uno; \
-	echo dos ) 
+sudo ${conda_home}/bin/pip install flask-runner flask-errormail sendgrid
 #Gnuplot installation
+gpplace=$(which gnuplot) && echo "Gnuplot was found at $gpplace; using that gnuplot" || (
+	wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz; \
+	./configure; make; \
+	sudo make install; \
+	#make check; \
+	 ) 
 #wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz
 #tar -xvzf gnuplot-5.2.4.tar.gz
 #cd gnuplot-5.2.4
