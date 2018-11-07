@@ -73,28 +73,20 @@ source ${conda_home}/bin/activate ${conda_env} && echo Activated conda environme
     ${conda_home}/bin/conda create -n ${conda_env} python=3.7; \
     source ${conda_home}/bin/activate ${conda_env}; \
     echo Created and activated the conda environment ${conda_env} )
-echo copref ${CONDA_PREFIX}
+#echo copref ${CONDA_PREFIX}
 #source activate base
+env_preffix=${conda_home}/envs/python37
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c bioconda numpy pandas pysam
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c conda-forge mechanicalsoup selenium
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} pymongo flask cython lxml requests
-sudo ${CONDA_PREFIX}/bin/pip install -U pip
-sudo ${CONDA_PREFIX}/bin/pip install flask-runner flask-errormail sendgrid
+sudo ${env_preffix}/bin/pip install -U pip
+sudo ${env_preffix}/bin/pip install flask-runner flask-errormail sendgrid
 #Gnuplot installation
 gpplace=$(which gnuplot) &>/dev/null && echo "Gnuplot was found at $gpplace; using that gnuplot" || (
     echo "Installing gnuplot..."; wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz; \
 	cd gnuplot-5.2.4; ./configure; make; sudo make install; \
 	#make check; \
-	 ) 
-#wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz
-#tar -xvzf gnuplot-5.2.4.tar.gz
-#cd gnuplot-5.2.4
-#./configure
-#make
-#make check
-#sudo make install
-#cd ..
-#sudo rm -rf gnuplot-5.2.4*
+	cd ..; sudo rm -rf gnuplot-5.2.4* ) 
 
 #Chrome driver (For Selenium)
 wget https://chromedriver.storage.googleapis.com/2.40/chromedriver_linux64.zip
