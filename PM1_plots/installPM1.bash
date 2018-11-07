@@ -55,16 +55,10 @@ function conda_install(){
 	rm Miniconda${python_version}-latest-Linux-x86_64.sh
 	#Make the updated shell path available in this session:
 	export PATH="$PATH:${conda_home}"
-    #Output the contents of ~/.bashrc plus the content enclosed in qoutes (which is in a string representation that handles newline characters) to the file ~/.bashrc.new.qiagen
-    echo -e "\n#Shell environment for qiagen\nexport LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:${srv_qiagen}/bin/ssw/src/"|cat ~/.bashrc ->~/.bashrc.new.qiagen
-    #Move the file ~/.bashrc.new.qiagen to ~/.bashrc (overwriting the existent ~/.bashrc withouk asking for confirmation)
-    mv -f ~/.bashrc.new.qiagen ~/.bashrc
-    #Make the updated shell path available in this session:
-    source ~/.bashrc
     conda_env='base'
     source ${conda_home}/bin/activate ${conda_env}
 }
-condabin=`which conda`
+condabin=`which conda &> /dev/null`
 if [ -z $condabin ]
 then
 	conda_home=/srv/conda
@@ -79,17 +73,17 @@ source ${conda_home}/bin/activate ${conda_env} && echo Activated conda environme
     ${conda_home}/bin/conda create -n ${conda_env} python=3.7; \
     source ${conda_home}/bin/activate ${conda_env}; \
     echo Created and activated the conda environment ${conda_env} )
+echo copref ${CONDA_PREFIX}
 #source activate base
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c bioconda numpy pandas pysam
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} -c conda-forge mechanicalsoup selenium
 sudo ${conda_home}/bin/conda install -y -n ${conda_env} pymongo flask cython lxml requests
-sudo ${conda_home}/bin/pip install -U pip
-sudo ${conda_home}/bin/pip install flask-runner flask-errormail sendgrid
+sudo ${CONDA_PREFIX}/bin/pip install -U pip
+sudo ${CONDA_PREFIX}/bin/pip install flask-runner flask-errormail sendgrid
 #Gnuplot installation
 gpplace=$(which gnuplot) &>/dev/null && echo "Gnuplot was found at $gpplace; using that gnuplot" || (
     echo "Installing gnuplot..."; wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz; \
-	./configure; make; \
-	sudo make install; \
+	cd gnuplot-5.2.4; ./configure; make; sudo make install; \
 	#make check; \
 	 ) 
 #wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz
