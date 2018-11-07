@@ -373,8 +373,14 @@ class Graph_object():
         hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
         all_mutations_soup = HGMD.scrape_HGMD_all_mutations(hgmd_username,hgmd_password)
         #list of objects
-        #variant_instances = HGMD.extract_missense_nonsense(all_mutations_soup)
-        variant_instances = HGMD.extract_missense(all_mutations_soup)
+        try:
+            #variant_instances = HGMD.extract_missense_nonsense(all_mutations_soup)
+            variant_instances = HGMD.extract_missense(all_mutations_soup)
+        except Exception as exc:
+            HGMD.log_and_email_htmls_with_error({"extract_missense":str(soup)},exc,"extract missense")
+            print("HTML code of the page dumped in the file error.log")      
+            raise exc
+
         #for i in variant_instances:
         #   print(i.__dict__) #returns dict of mutation class and list of objects in that class
         separate_var_class = self.var_class_separator(variant_instances)

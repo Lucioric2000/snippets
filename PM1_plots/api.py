@@ -252,19 +252,27 @@ class HGMD_pro():
         except Exception as exc:
             print("\nHGMD exception executed: {0}".format(traceback.format_exc()))
             print("Check HGMD username and password are correct and try again.\nAlternatively check you are not already logged in to HGMD with a web browser:\nhttps://portal.biobase-international.com/cgi-bin/portal/login.cgi\n")
+            print("HTML code of the page dumped in the file error.log")
             sys.exit()
         return soup
-    def email_htmls_with_error(self,htmls,error,subject):
+    def log_and_email_htmls_with_error(self,htmls,error,subject):
         #SenfGrid Key for sengding mails with debug info to me
         sendgrid_key="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"
         sg = sendgrid.SendGridAPIClient(apikey=sendgrid_key)
-        from_email = Email("lucioric@freelancecuernavaca.com")
-        to_email = Email("lucioric@freelancecuernavaca.com")
-        content = Content("text/plain", "{0}. During the analysis, the following error happened: {1}".format(subject,traceback.format_exc()))
+        from_email = Email("lucioric@ibt.unam.mx")
+        to_email = Email("lucioric@ibt.unam.mx")
+        #from_email = Email("lucioric@freelancecuernavaca.com")
+        #to_email = Email("lucioric@freelancecuernavaca.com")
+        contentstr="{0}. During the analysis, the following error happened: {1}".format(subject,traceback.format_exc())
+        content = Content("text/plain", contentstr)
         mail = Mail(from_email, subject, to_email, content)
+        error_log_h=open("error.log","a")
+        error_log_h.write("Error at {0}:\n".format(time.asctime()))
+        error_log_h.write(contentstr)
+        error_log_h.write("\n")
         for (htmlname,htmlcontents) in htmls.items():
             att=Attachment()
-            print("hc",htmlcontents)
+            error_log_h.write("html {0}:\n{1}\n".format(htmlname,htmlcontents))
             if isinstance(htmlcontents,str):
                 htmlcontents=htmlcontents.encode("UTF-8")
             att.content=base64.b64encode(htmlcontents).decode()
@@ -274,10 +282,11 @@ class HGMD_pro():
             att.disposition="attachment"
             mail.add_attachment(att)
         response = sg.client.mail.send.post(request_body=mail.get())
-        print("mail_sending_status:",response)
-        print("status_code:",response.status_code)
-        print("response_body:",response.body)
-        print("response_headers:",response.headers)
+        error_log_h.write("mail sending status: {0}\n".format(response))
+        error_log_h.write("mail sending status code: {0}\n".format(response.status_code))
+        error_log_h.write("mail sending status body: {0}\n".format(response.body))
+        error_log_h.write("======================\n")
+        error_log_h.close()
         raise error
 
       
@@ -291,7 +300,7 @@ class HGMD_pro():
         except Exception as exc:
             htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
             subject = "Gene page {0} for debug".format(gene)
-            self.email_htmls_with_error(htmls,exc,subject)
+            self.log_and_email_htmls_with_error(htmls,exc,subject)
         gene_id_value = gene_id_element['value']
         trans_element = form.find("input", attrs={"name" : "refcore"})
         HGMD_transcript_id = trans_element['value']
@@ -346,8 +355,7 @@ class HGMD_pro():
                         print("Columns in HGMD table = " + str(len(cols)) + ". Cannot handle this many columns")
                 num_rows =+1
             else:
-                pass                
-
+                pass
         return HGMD_var_objs
 
     def write_DM_file(self, variant_instance_list):
@@ -369,6 +377,7 @@ class HGMD_pro():
                 except:
                     pass
         return "temp_hgmd_file"
+
 
 
 if __name__ == "__main__":
