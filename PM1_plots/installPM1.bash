@@ -84,7 +84,7 @@ sudo ${env_preffix}/bin/pip install flask-runner flask-errormail sendgrid
 #Gnuplot installation
 gpplace=$(which gnuplot) &>/dev/null && echo "Gnuplot was found at $gpplace; using that gnuplot" || (
     echo "Installing gnuplot..."; wget https://cytranet.dl.sourceforge.net/project/gnuplot/gnuplot/5.2.4/gnuplot-5.2.4.tar.gz; \
-	cd gnuplot-5.2.4; ./configure; make; sudo make install; \
+	tar -xvzf gnuplot-5.2.4.tar.gz; cd gnuplot-5.2.4; ./configure; make; sudo make install; \
 	#make check; \
 	cd ..; sudo rm -rf gnuplot-5.2.4* ) 
 
