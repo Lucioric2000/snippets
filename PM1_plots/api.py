@@ -293,8 +293,13 @@ class HGMD_pro():
     def form_finder(self, browser, gene):
         gene_search = browser.get("https://portal.biobase-international.com/hgmd/pro/gene.php?gene=" + gene)
         time.sleep(0.5)
-        soup = BeautifulSoup(gene_search.content)
+        soup = BeautifulSoup(gene_search.content,features="lxml")
         form = soup.find("form", attrs={ "action" : "all.php" })
+        if form is None:
+            gene_search_2=browser.get("https://portal.biobase-international.com/cgi-bin/portal/login.cgi?redirect_url=/hgmd/pro/gene.php?gene=" + gene)
+            time.sleep(0.5)
+            soup = BeautifulSoup(gene_search_2.content,features="lxml")
+            form = soup.find("form", attrs={ "action" : "all.php" })
         try:
             gene_id_element = form.find("input", attrs={"name" : "gene_id"})
         except Exception as exc:
