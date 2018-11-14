@@ -23,12 +23,13 @@ class Graph_object():
     slice_start = 0
     slice_end = 0
 	
-    def __init__(self, gene_name, user_pos, *extra_args):
+    def __init__(self, gene_name, user_pos, *extra_args,**kwargs):
         self.gene = gene_name
         self.user_pos = user_pos
         #self.hgmd_username = hgmd_username
         #self.hgmd_password = hgmd_password
         self.extra_args = extra_args
+        self.kwargs=kwargs
 
    	#Ensembl#############################
         self.Ens = Ensembl_api()
@@ -49,7 +50,10 @@ class Graph_object():
         ##Traceback (most recent call last):  File "PM1_plotter.py", line 41, in __init__ self.length = self.reviewed_uniprot_entries[0]['Length'] IndexError: list index out of range
         ## Try running script again
         ##print(self.reviewed_uniprot_entries)
-        self.length = self.reviewed_uniprot_entries[0]['Length']
+        if kwargs.get("length",False):
+            self.length=kwargs["length"]
+        else:
+            self.length = self.reviewed_uniprot_entries[0]['Length']
         #returns text of all gff annotations
         self.all_gff_annotation = self.get_gff_domains()
         #Gff objects where values are ranges of 'Domain', 'Region', 'DNA binding'
@@ -69,10 +73,12 @@ class Graph_object():
         except:
             self.consurf_file = "no_file"
         self.consurf_data = self.parse_consurf_grades(self.consurf_file, self.length)
-        print("consurffile",self.consurf_file,gene_name,self.consurf_data)
+        print("consurffile",self.consurf_file,gene_name,self.consurf_data,"chrom",self.chrom)
         if len(self.consurf_data["cons"])>0:
             self.write_consurf_data = self.write_consurf_grades(self.consurf_data)
 
+        if kwargs.get("cut_out",False):
+            return
         #HGMD##############################
         print('\nGathering HGMD data from website...')
         self.hgmd_data = self.get_HGMD_data(gene_name)             
@@ -122,7 +128,7 @@ class Graph_object():
                     #return uniprot_revd_entry
                     #print(human_match_list)
             except:
-                print('Check reviewed transcript is identified:')
+                print('Check reviewed transcript is identified:',entry_dict)
                 print(human_match_list)
                 print('Check gene name at www.uniprot.org and/or try re-running script, as Uniprot connection possibly failed')
         return human_match_list
@@ -660,4 +666,24 @@ class Graph_object():
         return filtered_df
         
 if __name__ == "__main__":
-    Graph_object(sys.argv[1], sys.argv[2], *sys.argv[3:])
+    if len(sys.argv)==1:
+        print ("Running PM1_plotter without arguments, for debug")
+        gene_name="ABCC8"
+        user_pos="123"
+        chrom="11"
+        gobj=Graph_object("ABCC8","123",cut_out=True,length=1581)
+        gobj.chrom=chrom
+        #gobj.length=1581
+        print('\nPlotting all data...\n')
+        if chrom=='X':
+            gobj.execute_gnuplot(gene_name, user_pos, chrom, hemi=True)
+        elif chrom=='Y':
+            gobj.execute_gnuplot(gene_name, user_pos, chrom, chrY=True)
+        else:
+            gobj.execute_gnuplot(gene_name, user_pos, chrom)
+        print("Data plotted.\n")
+        gobj.create_smaller_graph_file()
+        #self.execute_zoomed_gnuplot(gene_name)
+
+    else:
+        Graph_object(sys.argv[1], sys.argv[2], *sys.argv[3:])

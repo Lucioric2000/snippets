@@ -314,7 +314,7 @@ class HGMD_pro():
         url = "https://portal.biobase-international.com/hgmd/pro/all.php"
         response = browser.post(url, data=params)
         time.sleep(0.5)
-        soup = BeautifulSoup(response.content)
+        soup = BeautifulSoup(response.content,features="lxml")
         response.close()
         return soup
         
