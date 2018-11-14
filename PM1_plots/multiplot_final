@@ -47,7 +47,7 @@ set key inside right top
 set linestyle 1 lt rgb "black" lw 0.5 # set linestyle for frame around legend
 set key horizontal box linestyle 1 # add frame to legend
 #plot data u DM_residue:DM_track:ytic(DM_phen) pt 7 title 'DM', data u DMq_res:DMq_track:ytic(DMq_phen) pt 2 title 'DM?'
-plot data u DM_residue pt 7 title 'DM'#, data u DMq_track pt 2 title 'DM?'
+plot data using DM_residue:DM_track pt 7 title 'DM'#, data u DMq_res:DMq_track pt 2 title 'DM?'
 # N.B. pt 2 = cross, pt 3 = star, pt 7 = filled circle
 
 #plot data u DM_residue:DM_track:ytic(DM_phen) with circles title 'DM', data u DMq_res:DMq_track:ytic(DMq_phen) title 'DM?'
@@ -71,7 +71,7 @@ unset title
 unset ytics
 unset y2tics
 unset grid
-#set ylabel 'Uniprot Domains' rotate by 0 offset -8
+set ylabel 'Uniprot Domains' rotate by 0 offset -8
 set yrange [0:domain_count]
 set border 1 lw 2
 set key autotitle columnheader

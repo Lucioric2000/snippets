@@ -1,6 +1,6 @@
 #!/bin/bash
 #You may install this software by downloading the compressed file via Github webpage or by its URL via wget <URL>, or using git with the command
-yum -y install sudo git
+sudo yum -y install sudo git
 if [[ `expr match "$(pwd)" '.*\(PM1_plots\)'` = "PM1_plots" ]]
 then
     echo "Already in PM1_plots folder."

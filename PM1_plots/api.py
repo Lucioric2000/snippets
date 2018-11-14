@@ -38,6 +38,23 @@ class Uniprot_api():
                 entry_list = entry.split('\t')
                 if entry_list != headers:
                     dict_entry_list.append(dict(zip(headers, entry_list)))
+        with open("save/ensembl_{0}.html".format(ensembl_id),"w") as opf:
+            opf.write(r.text)
+        return dict_entry_list
+    #Return the Uniprot info from a previously saved file
+    def get_pid_from_file(self, filename):
+        #params = {'from':'ENSEMBL_ID','to':'ACC','format':'tab','query': ensembl_id }
+        #r = requests.get(self.upload_ext, params=params)
+        with open(filename,"r") as opf:
+            fileread=opf.read()
+        dict_entry_list = []
+        split_r = fileread.split('\n')
+        headers = split_r[0].split('\t')
+        for entry in split_r:
+            if entry:
+                entry_list = entry.split('\t')
+                if entry_list != headers:
+                    dict_entry_list.append(dict(zip(headers, entry_list)))
         return dict_entry_list
 
     def get_entry_gff(self, pid):
@@ -288,6 +305,24 @@ class HGMD_pro():
         error_log_h.write("======================\n")
         error_log_h.close()
         raise error
+    def email_html_for_development(self,html,subject,gene):
+        #SenfGrid Key for sengding mails with debug info to me
+        sendgrid_key="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"
+        sg = sendgrid.SendGridAPIClient(apikey=sendgrid_key)
+        from_email = Email("lucioric@ibt.unam.mx")
+        to_email = Email("lucioric@ibt.unam.mx")
+        contentstr="{0}. The gene getting was successful".format(subject)
+        content = Content("text/plain", contentstr)
+        mail = Mail(from_email, subject, to_email, content)
+        att=Attachment()
+        if isinstance(html,str):
+            html=html.encode("UTF-8")
+        att.content=base64.b64encode(html).decode()
+        att.type="text/html"
+        att.filename="HGMD_{0}.html".format(gene)
+        att.disposition="attachment"
+        mail.add_attachment(att)
+        response = sg.client.mail.send.post(request_body=mail.get())
 
       
     def form_finder(self, browser, gene):
@@ -304,7 +339,7 @@ class HGMD_pro():
             gene_id_element = form.find("input", attrs={"name" : "gene_id"})
         except Exception as exc:
             htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
-            subject = "Gene page {0} for debug".format(gene)
+            subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
             self.log_and_email_htmls_with_error(htmls,exc,subject)
         gene_id_value = gene_id_element['value']
         trans_element = form.find("input", attrs={"name" : "refcore"})
@@ -315,6 +350,7 @@ class HGMD_pro():
         response = browser.post(url, data=params)
         time.sleep(0.5)
         soup = BeautifulSoup(response.content,features="lxml")
+        self.email_html_for_development(soup,"PM1_plotter: Gene page {0} for debug".format(gene),gene)
         response.close()
         return soup
         

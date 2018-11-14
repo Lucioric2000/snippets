@@ -42,7 +42,7 @@ class Graph_object():
         #self.plotting_file = gene_name + '_composite.data'
         self.zoomed_plot = gene_name + 'zoomed_composite.data'
         #dict of uniprot entries for this ensembl transcript
-        print('Getting Uniprot annotation file...') 
+        print('Getting Uniprot annotation file...')
         self.all_uniprot_entries = self.get_uniprot_entries(self.ensembl_id)
         #returns human reviews uniprot annotations
         self.reviewed_uniprot_entries = self.reviewed_human_entries(self.all_uniprot_entries) 
@@ -73,7 +73,7 @@ class Graph_object():
         except:
             self.consurf_file = "no_file"
         self.consurf_data = self.parse_consurf_grades(self.consurf_file, self.length)
-        print("consurffile",self.consurf_file,gene_name,self.consurf_data,"chrom",self.chrom)
+        print("consurffile",self.consurf_file,gene_name,self.consurf_data,"chrom",self.chrom,type(self.chrom))
         if len(self.consurf_data["cons"])>0:
             self.write_consurf_data = self.write_consurf_grades(self.consurf_data)
 
@@ -113,7 +113,11 @@ class Graph_object():
     ### Uniprot_data #####################################################
     def get_uniprot_entries(self, ensembl_id):
         Up = Uniprot_api()
-        up_entry_list = Up.get_pid_from_gene(ensembl_id)
+        saveduniprot="save/ensembl_{0}.html".format(ensembl_id)
+        if os.path.exists(saveduniprot):
+            up_entry_list = Up.get_pid_from_file(saveduniprot)
+        else:
+            up_entry_list = Up.get_pid_from_gene(ensembl_id)
         return up_entry_list
     
     #returns reviewed human entries 
@@ -185,11 +189,9 @@ class Graph_object():
             elif len(this_type_column) > int(length)+1:
                 print(k + " feature exceeds length of protein by more than one amino acid or multiple " + k + " features overlap. Program will now close")
                 sys.exit()
-            #print("ttc",this_type_column)
             if len(this_type_column)>0:
                 np_array = np.array(this_type_column, dtype=np.float)
                 arrays_to_save.append(np_array)
-        #print("asts",arrays_to_save)
         if len(arrays_to_save)>0:
             result_array=np.concatenate(arrays_to_save)
         else:
@@ -197,7 +199,6 @@ class Graph_object():
         with open(self.plotting_file, 'wb') as f:
             headers = '{0}'.format('\t'.join(self.uniprot_columns))
             f.write(bytes(headers, 'utf-8') + bytes('\n', 'utf-8'))
-            #np.savetxt(f, np.transpose([result_array]), delimiter='\t')
             np.savetxt(f, np.transpose(result_array), delimiter='\t')
         self.domain_count = len(master_dict.keys())
         return arrays_to_save
@@ -209,15 +210,11 @@ class Graph_object():
         this_annotation_array = []
         domain_count = 0
         position = 0
-        ##print('iterating through annotations for ' + key)
         master_dict_iter = iter(master_dict[key])
         for v in master_dict[key]:
-            #print(v)
             if domain_count == 0:
                 interval_length = int(v['start']) - 1  
-                ##print("interval " + str(interval_length))
                 domain_range = int(v['stop']) - int(v['start']) + 1
-                ##print("domain " + str(domain_range))
                 domain_count += 1
                 for i in range(interval_length):
                     position += 1
@@ -229,13 +226,10 @@ class Graph_object():
                         this_annotation_array.append(annotation_index)
                     else:
                         this_annotation_array.append(annotation_index)
-                        #next(master_dict_iter, None)
             elif domain_count > 0:
             	#to calculate the gap from last domain to the next
                 interval_length = int(v['start']) - position
-                ##print("interval " + str(interval_length))
                 domain_range = int(v['stop']) - int(v['start']) + 1
-                ##print("domain " + str(domain_range))
                 domain_count += 1
                 for i in range(interval_length):
                     position += 1
@@ -253,9 +247,7 @@ class Graph_object():
             this_annotation_array.append(None)
         if len(this_annotation_array) > position:
             slice_amount = int((len(this_annotation_array) - position) / 2)
-            #print(slice_amount)
             start = 0 + slice_amount
-            #print(start)
             mod_annotation_array = this_annotation_array[start:-slice_amount]
             return mod_annotation_array
         return this_annotation_array
@@ -327,6 +319,16 @@ class Graph_object():
         df = pd.concat([df, freq_column], axis=1)
         df.to_csv(self.plotting_file, sep='\t', na_rep='?')       
 
+    #Read composite
+    def read_composite(self, filename=None, indexed=True):
+        if filename is None:
+            filename=self.plotting_file#Defaulut
+        if indexed:
+            df = pd.read_csv(self.plotting_file, delimiter='\t', index_col=0)
+        else:
+            df = pd.read_csv(self.plotting_file, delimiter='\t')
+        return df
+
     ### Consurf data #################################################################
     def find_consurf_file(self, gene_name):
         base = "consurf_scores/"
@@ -369,7 +371,6 @@ class Graph_object():
         pos_df = pd.DataFrame({'pos' : cons_pos_dict['pos']})
         df = pd.concat([df, pos_df], axis=1)
         df.to_csv(self.plotting_file, sep='\t', na_rep='?')
-        print("plotting_file",self.plotting_file)
         return df    
     
 ### HGMD data  ###################################################################
@@ -402,8 +403,6 @@ class Graph_object():
     #Writes HGMD data into columns by phenotype, separates by DM and DM? annotation
     #assigns an index number to each phentotype so they can be plotted separately without many columns in the datafile
     def write_HGMD_data(self, obj_d, DM=True):
-        #for k,v in obj_d.items():
-        #    print(k,v)
         df = pd.read_csv(self.plotting_file, delimiter='\t', index_col=0)
         #phen_index where { phen : count }
         #print(max(list(obj_d.keys()),key=len)) # print the phenotype with the longest name
@@ -434,9 +433,7 @@ class Graph_object():
             df.to_csv(self.plotting_file, sep='\t', na_rep="?")
             #print(max(list(self.phen_index.keys()), key=len)) # print phenotype with the longest name
             self.longest_phen_DM = len(max(list(self.phen_index.keys()), key=len)) # length of phenotype with the longest name
-            #print([list(self.phen_index.values())])
             df.to_csv(self.plotting_file, sep='\t', na_rep=list(self.phen_index.keys())[list(self.phen_index.values()).index(1)])
-            #print(df)
             self.HGMD_DM_track_count = count
             self.total_phen_count = count
         elif not DM:
@@ -511,7 +508,6 @@ class Graph_object():
     def construct_gnuplot_command(self, var_name, var):
         variable = "'" + var + "'"
         cmd = var_name + '=' + variable
-        #print(cmd)
         return(cmd)
         
     def execute_zoomed_gnuplot(self, gene_name):
@@ -558,13 +554,17 @@ class Graph_object():
         subprocess.call(gnuplot_command)
         
     #call gnuplot script
-    def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False):
+    def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None):
+        if plotting_file is None:
+            plotting_file=self.plotting_file
+        else:
+            self.investigate_plotting_file(plotting_file)
         adjusted_length = int(self.length)
         svg_name_string = gene_name + '_composite_' + user_pos + '.svg'
         svg_name = self.construct_gnuplot_command("svg_name", svg_name_string)
         x_length = self.construct_gnuplot_command("x_length" , str(adjusted_length))
         gene_name = self.construct_gnuplot_command("gene_name", gene_name)
-        data = self.construct_gnuplot_command("data", self.plotting_file)
+        data = self.construct_gnuplot_command("data", plotting_file)
         chrom = self.construct_gnuplot_command("chrom", chrom)
         if self.domain_count == 0:
             print("No Uniprot domains to plot")
@@ -572,10 +572,14 @@ class Graph_object():
         else:
             domain_count = self.construct_gnuplot_command("domain_count", str(self.domain_count))
             domain_gnu = self.construct_gnuplot_command("domain_gnu", str(self.domain_count + 1))
+        print("xlen",x_length)
         #self.HGMD_track_count = count
 
         # Assess how long the longest phenotype name is
-        longest_phen_list = [self.longest_phen_DM, self.longest_phen_DMq]
+        if hasattr(self,"longest_phen_DM"):
+            longest_phen_list = [self.longest_phen_DM, self.longest_phen_DMq]
+        else:
+            longest_phen_list=[20,21]
         longest_phen = max(longest_phen_list)
         # calculate difference between longest phenotype name and threshold (60)
         # Use this as the basis for adjusting the left margin of the plot, and expanding the canvas width
@@ -594,11 +598,13 @@ class Graph_object():
             canvas_x = self.construct_gnuplot_command("canvas_x", str(2000))
 
         DM_phen_count = self.construct_gnuplot_command("DM_phen_count", str(self.HGMD_DM_track_count))
-        #print(DM_phen_count)
         DMq_phen_count = self.construct_gnuplot_command("DMq_phen_count", str(self.HGMD_DMq_track_count))
-        #print(DMq_phen_count)
+        self.total_phen_count=52
         total_phen_count = self.construct_gnuplot_command("total_phen_count", str(self.total_phen_count))
         user_pos = self.construct_gnuplot_command("user_pos", str(self.user_pos))
+        print("tofeco",total_phen_count)
+        #print(DM_phen_count)
+        #print(DMq_phen_count)
         if "-i" in self.extra_args or "--interactive" in self.extra_args:
             terminal="set terminal x11";
         else:
@@ -616,15 +622,17 @@ class Graph_object():
                                canvas_x, left_margin, x_length, data,
                                chrom, domain_count, domain_gnu, DM_phen_count,
                                DMq_phen_count, total_phen_count,terminal))),"multiplot_final"]
-        #print("gnuplot_cmd:"," ".join(gnuplot_command))
+        print("gnuplot_cmd:"," ".join(gnuplot_command))
         completedprocess=subprocess.run(gnuplot_command,shell=False)
-        print("coproc",completedprocess)
+        print("completed_process:",completedprocess)
 
     #inital method to create a zoomed in data file for plotting with an additional gnuplot script
-    def create_smaller_graph_file(self):
+    def create_smaller_graph_file(self,plotting_file=None):
+        if plotting_file is None:
+            plotting_file=self.plotting_file
         print("create_smaller_graph function in use")
         #read in dataframe from file.data
-        df = pd.read_csv(self.plotting_file, delimiter='\t', index_col=0)
+        df = pd.read_csv(plotting_file, delimiter='\t', index_col=0)
         #extract columns into new dataframe; domains based on n columns from start, "cons", "cons_MA", "cons_cumsum"
         columns = self.uniprot_columns + ["cons", "cons_MA", "cons_cumsum", "pos"]
         df_mini = df.filter(columns, axis=1)
@@ -643,13 +651,13 @@ class Graph_object():
         print("columns_in_range function in use")
     	#drop unwanted_columns
         df_other = df_whole.drop(columns, axis=1)
-    	#return columns of interest
+        #return columns of interest
         exac_het_df = self.df_filter_columns(df_other, ["het_pos", "het_freq"], "het_pos")
         df_sliced = pd.concat([df_sliced, exac_het_df], axis=1) 	
         exac_hom_df = self.df_filter_columns(df_other, ["hom_pos", "hom_freq"], "hom_pos")
         df_sliced = pd.concat([df_sliced, exac_hom_df], axis=1)
         #exac_hemi_df = self.df_filter_columns(df_other, ["hemi_pos", "hemi_freq"], "hemi_pos")
-  	#df_sliced = pd.concat([df_sliced, exac_hemi_df], axis=1)       
+        #df_sliced = pd.concat([df_sliced, exac_hemi_df], axis=1)       
         DM_df = self.df_filter_columns(df_other, ["DM_track", "DM_phenotype", "DM_Residue"], "DM_Residue")
        	df_sliced = pd.concat([df_sliced, DM_df], axis=1)
         DMq_df = self.df_filter_columns(df_other, ["DMq_track", "DMq_phenotype", "DM_qResidue"], "DM_qResidue")
@@ -671,18 +679,21 @@ if __name__ == "__main__":
         gene_name="ABCC8"
         user_pos="123"
         chrom="11"
-        gobj=Graph_object("ABCC8","123",cut_out=True,length=1581)
+        #--interactive or -i makes the graph interactive
+        gobj=Graph_object("ABCC8","123","--interactive",cut_out=True,save_for_debug=True)#length 1581
         gobj.chrom=chrom
         #gobj.length=1581
+        #plotting_file="ABCC8_composite_123_JDP.data"
+        plotting_file="ajdpnot.data"
         print('\nPlotting all data...\n')
         if chrom=='X':
-            gobj.execute_gnuplot(gene_name, user_pos, chrom, hemi=True)
+            gobj.execute_gnuplot(gene_name, user_pos, chrom, hemi=True,plotting_file=plotting_file)
         elif chrom=='Y':
-            gobj.execute_gnuplot(gene_name, user_pos, chrom, chrY=True)
+            gobj.execute_gnuplot(gene_name, user_pos, chrom, chrY=True,plotting_file=plotting_file)
         else:
-            gobj.execute_gnuplot(gene_name, user_pos, chrom)
+            gobj.execute_gnuplot(gene_name, user_pos, chrom,plotting_file=plotting_file)
         print("Data plotted.\n")
-        gobj.create_smaller_graph_file()
+        gobj.create_smaller_graph_file(plotting_file=plotting_file)
         #self.execute_zoomed_gnuplot(gene_name)
 
     else:
