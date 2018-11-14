@@ -24,18 +24,19 @@ set datafile separator '\t'
 unset xtics
 set xrange [0:x_length]
 set x2range [0:x_length]
-unset key
-unset border
-unset ylabel
+#unset key
+#unset border
+#unset ylabel
 set ytics out nomirror
+#set xtics out nomirror
 set yrange[0:total_phen_count]
 set grid
 unset y2tics
 set origin 0,0.7
 set size 1,0.3
-set arrow from user_pos,-1 to user_pos,total_phen_count nohead lc rgb 'red'
+#set arrow from user_pos,-1 to user_pos,total_phen_count nohead lc rgb 'red'
 # specify columns from data file for data to plot
-DM_residue = domain_gnu + 11
+DM_residue = domain_gnu + 13
 DM_track = DM_residue - 2
 DM_phen = DM_residue - 1
 
@@ -46,8 +47,7 @@ DMq_phen = DM_phen + 3
 set key inside right top
 set linestyle 1 lt rgb "black" lw 0.5 # set linestyle for frame around legend
 set key horizontal box linestyle 1 # add frame to legend
-#plot data u DM_residue:DM_track:ytic(DM_phen) pt 7 title 'DM', data u DMq_res:DMq_track:ytic(DMq_phen) pt 2 title 'DM?'
-plot data using DM_residue:DM_track pt 7 title 'DM'#, data u DMq_res:DMq_track pt 2 title 'DM?'
+plot data every :::::DM_phen_count+5 using DM_residue:DM_track pt 7 title 'DM', data every :::::DMq_phen_count+5 using DMq_res:DMq_track pt 2 title 'DM?'
 # N.B. pt 2 = cross, pt 3 = star, pt 7 = filled circle
 
 #plot data u DM_residue:DM_track:ytic(DM_phen) with circles title 'DM', data u DMq_res:DMq_track:ytic(DMq_phen) title 'DM?'
@@ -74,15 +74,17 @@ unset grid
 set ylabel 'Uniprot Domains' rotate by 0 offset -8
 set yrange [0:domain_count]
 set border 1 lw 2
-set key autotitle columnheader
+#set key autotitle columnheader
 #set key at 2642,3 vertical maxrows 3
-set key at 0,domain_count vertical maxrows domain_count
+#set key at 0,domain_count vertical maxrows domain_count #bottom left
 set datafile missing "?"
 unset arrow
 set arrow from user_pos,-11 to user_pos,total_phen_count nohead lc rgb 'red'
 plot for [i=2:domain_gnu] data u 1:(column(i)) with lines
 
 
+set xrange [0:x_length]
+set x2range [0:x_length]
 set style line 10 lt 4 lw 0.5 lc rgb 'navy'
 set style line 11 lt 4 lw 1 lc rgb 'red'
 set origin 0,0.4
@@ -99,8 +101,7 @@ position_col = domain_gnu + 10
 cons_data = position_col - 3
 
 
-#plot data u position_col:cons_data with lines ls 10 notitle
-plot data u cons_data with lines ls 10 notitle
+plot data u position_col:cons_data with lines ls 10 notitle
 #plot data u 12:9 with lines ls 10 notitle
 #data u 12:11 with lines ls 11 notitle
 
@@ -112,15 +113,14 @@ set yrange [0.00001:1]
 set xlabel "Protein residue marked by red line at position ".user_pos
 set ylabel "ExAC all MAF" rotate by 0 offset -6 #exac_canon_transcript_id
 set logscale y
-set key horizontal inside right top
+#set key horizontal inside right top #bottom right pane
 #need to feed i variable columns
 
-het_pos = domain_gnu + 1
-het_freq = domain_gnu + 2
-hom_pos = domain_gnu + 3
-hom_freq = domain_gnu + 4
-#hemi_pos = domain_gnu + 5
-#hemi_freq = domain_gnu + 6
+het_pos = domain_gnu #+ 1
+het_freq = domain_gnu +1#+ 2
+hom_pos = domain_gnu +2#+ 3
+hom_freq = domain_gnu + 3#+ 4
+#hemi_pos = domain_gnu + 4#+ 5
+#hemi_freq = domain_gnu + 5#+ 6
 
 plot data u het_pos:het_freq pt 2 title 'Heterozygous', data u hom_pos:hom_freq pt 3 title 'Homozygous'
-#plot data u het_pos pt 2 title 'Heterozygous', data u hom_pos pt 3 title 'Homozygous'

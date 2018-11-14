@@ -73,7 +73,7 @@ class Graph_object():
         except:
             self.consurf_file = "no_file"
         self.consurf_data = self.parse_consurf_grades(self.consurf_file, self.length)
-        print("consurffile",self.consurf_file,gene_name,self.consurf_data,"chrom",self.chrom,type(self.chrom))
+        #print("consurffile",self.consurf_file,gene_name,self.consurf_data,"chrom",self.chrom,type(self.chrom))
         if len(self.consurf_data["cons"])>0:
             self.write_consurf_data = self.write_consurf_grades(self.consurf_data)
 
@@ -85,8 +85,10 @@ class Graph_object():
         if self.DM_objs == {} and self.DM_likely_objs == {}:
             print("No variants found in HGMD")
         elif self.DM_objs == {}:
+            print("dnprim")
             self.write_DM_data2 = self.write_HGMD_data(self.DM_likely_objs, DM=False)
         else:
+            print("dmseg")
             self.write_DM_data = self.write_HGMD_data(self.DM_objs)
             self.write_DM_data2 = self.write_HGMD_data(self.DM_likely_objs, DM=False)
 
@@ -324,10 +326,64 @@ class Graph_object():
         if filename is None:
             filename=self.plotting_file#Defaulut
         if indexed:
-            df = pd.read_csv(self.plotting_file, delimiter='\t', index_col=0)
+            df = pd.read_csv(plotting_file, delimiter='\t', index_col=0)
         else:
-            df = pd.read_csv(self.plotting_file, delimiter='\t')
+            df = pd.read_csv(plotting_file, delimiter='\t')
         return df
+    def investigate_plotting_file(self,filename):
+        rc=self.read_composite(filename)
+        lastcol=rc.columns[-1]
+        #print("rcc:",rc.columns,filename,lastcol,len(rc[lastcol]))
+        lastinlastcol=None
+        self_listlen_HGMD_DMq_track_count=0
+        self_listlen_HGMD_DM_track_count=0
+        iline=len(rc[lastcol])
+        for line in reversed(rc[lastcol]):
+            iline-=1
+            if lastinlastcol is None:
+                lastinlastcol=line
+            else:
+                if lastinlastcol!=line:
+                    if iline==len(rc[lastcol])--2:
+                        self_listlen_HGMD_DMq_track_count=iline+1
+                    else:
+                        self_listlen_HGMD_DMq_track_count=iline
+                    break
+        iline=len(rc[lastcol])
+        for line in reversed(rc[rc.columns[-4]]):
+            iline-=1
+            if lastinlastcol is None:
+                lastinlastcol=line
+            else:
+                if lastinlastcol!=line:
+                    if iline==len(rc[lastcol])--2:
+                        self_listlen_HGMD_DM_track_count=iline+1
+                    else:
+                        self_listlen_HGMD_DM_track_count=iline
+                    break
+        #print("trks",self.HGMD_DMq_track_count,self.HGMD_DM_track_count,rc)
+        dmqphens=set(rc[rc.columns[-2][0:self_listlen_HGMD_DMq_track_count]])
+        dmphens=set(rc[rc.columns[-5][0:self_listlen_HGMD_DM_track_count]])
+        dmphens.remove(lastinlastcol)
+        dmqphens.remove(lastinlastcol)
+        #self.HGMD_DM_track_count=len(dmphens)
+        #self.HGMD_DMs_track_count=len(dmqphens)
+        self.HGMD_DM_track_count=self_listlen_HGMD_DM_track_count
+        self.HGMD_DMq_track_count=self_listlen_HGMD_DMq_track_count
+        allphens=dmphens|dmqphens
+        self.total_phen_count=len(allphens)
+        #self.listlen_HGMD_DM_track_count=self_listlen_HGMD_DM_track_count
+        #self.listlen_HGMD_DMq_track_count=self_listlen_HGMD_DMq_track_count
+        if len(dmphens)==0:
+            self.longest_phen_DM=0
+        else:
+            self.longest_phen_DM=max(map(len,dmphens))
+        if len(dmqphens)==0:
+            self.longest_phen_DMq=0
+        else:
+            self.longest_phen_DMq=max(map(len,dmqphens))
+        #assert 0,(dmqphens,dmphens,"nq",nuevasenq,nuevasennoq)
+        #assert 0,(self.HGMD_DMq_track_count,self.HGMD_DM_track_count)
 
     ### Consurf data #################################################################
     def find_consurf_file(self, gene_name):
@@ -572,14 +628,11 @@ class Graph_object():
         else:
             domain_count = self.construct_gnuplot_command("domain_count", str(self.domain_count))
             domain_gnu = self.construct_gnuplot_command("domain_gnu", str(self.domain_count + 1))
-        print("xlen",x_length)
+        print("xlen",x_length,domain_gnu)
         #self.HGMD_track_count = count
 
         # Assess how long the longest phenotype name is
-        if hasattr(self,"longest_phen_DM"):
-            longest_phen_list = [self.longest_phen_DM, self.longest_phen_DMq]
-        else:
-            longest_phen_list=[20,21]
+        longest_phen_list = [self.longest_phen_DM, self.longest_phen_DMq]
         longest_phen = max(longest_phen_list)
         # calculate difference between longest phenotype name and threshold (60)
         # Use this as the basis for adjusting the left margin of the plot, and expanding the canvas width
@@ -599,14 +652,13 @@ class Graph_object():
 
         DM_phen_count = self.construct_gnuplot_command("DM_phen_count", str(self.HGMD_DM_track_count))
         DMq_phen_count = self.construct_gnuplot_command("DMq_phen_count", str(self.HGMD_DMq_track_count))
-        self.total_phen_count=52
         total_phen_count = self.construct_gnuplot_command("total_phen_count", str(self.total_phen_count))
         user_pos = self.construct_gnuplot_command("user_pos", str(self.user_pos))
-        print("tofeco",total_phen_count)
+        print("tofeco",total_phen_count,DMq_phen_count,DM_phen_count)
         #print(DM_phen_count)
         #print(DMq_phen_count)
         if "-i" in self.extra_args or "--interactive" in self.extra_args:
-            terminal="set terminal x11";
+            terminal="set terminal x11 persist";
         else:
             terminal="set terminal svg background rgb 'grey90' size canvas_x, 800";
 
@@ -622,7 +674,6 @@ class Graph_object():
                                canvas_x, left_margin, x_length, data,
                                chrom, domain_count, domain_gnu, DM_phen_count,
                                DMq_phen_count, total_phen_count,terminal))),"multiplot_final"]
-        print("gnuplot_cmd:"," ".join(gnuplot_command))
         completedprocess=subprocess.run(gnuplot_command,shell=False)
         print("completed_process:",completedprocess)
 
@@ -672,19 +723,31 @@ class Graph_object():
         sliced_filtered_df = filtered_df.loc[df[column_name].isin(this_range)]
         return sliced_filtered_df   
         return filtered_df
-        
+
+import argparse
+parser = argparse.ArgumentParser(prog="python "+sys.argv[0])
+parser.add_argument("gene_name",metavar="<param_file>",help="Parameter file. This file may contain several sections with names of read sets. Only the parameters the sections 'general', 'smconunter' and with the name of the read set will take effect.")
+parser.add_argument("vc",help="version of smcounter",choices=("v1","v2"))
+parser.add_argument("analysis",help="Type of analysis",choices=("single","tumor-normal"))
+parser.add_argument("outputPath",help="Path where the output files will be created. If it does not exist, program will create it.")
+parser.add_argument("readSet",help="Read set(s)",nargs="+")
+#args = parser.parse_args()
+
 if __name__ == "__main__":
     if len(sys.argv)==1:
         print ("Running PM1_plotter without arguments, for debug")
         gene_name="ABCC8"
         user_pos="123"
         chrom="11"
+        options=("--interactive",)
+        #options=()
         #--interactive or -i makes the graph interactive
-        gobj=Graph_object("ABCC8","123","--interactive",cut_out=True,save_for_debug=True)#length 1581
+        gobj=Graph_object("ABCC8","123",*options,cut_out=True,save_for_debug=True)#length 1581
+        #gobj=Graph_object("ABCC8","123",cut_out=True,save_for_debug=True)#length 1581
         gobj.chrom=chrom
         #gobj.length=1581
-        #plotting_file="ABCC8_composite_123_JDP.data"
-        plotting_file="ajdpnot.data"
+        plotting_file="ABCC8_composite_123_JDP.data"
+        #plotting_file="ajdpnot.data"
         print('\nPlotting all data...\n')
         if chrom=='X':
             gobj.execute_gnuplot(gene_name, user_pos, chrom, hemi=True,plotting_file=plotting_file)
@@ -693,8 +756,9 @@ if __name__ == "__main__":
         else:
             gobj.execute_gnuplot(gene_name, user_pos, chrom,plotting_file=plotting_file)
         print("Data plotted.\n")
-        gobj.create_smaller_graph_file(plotting_file=plotting_file)
+        #gobj.create_smaller_graph_file(plotting_file=plotting_file)
         #self.execute_zoomed_gnuplot(gene_name)
 
     else:
         Graph_object(sys.argv[1], sys.argv[2], *sys.argv[3:])
+chrome_driver.close()
