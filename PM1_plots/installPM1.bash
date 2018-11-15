@@ -70,7 +70,7 @@ fi
 conda_env='python37'
 source ${conda_home}/bin/activate ${conda_env} && echo Activated conda environment ${conda_env} || ( \
     #Conda environment not found: creating it
-    ${conda_home}/bin/conda create -n ${conda_env} python=3.7; \
+    sudo ${conda_home}/bin/conda create -n ${conda_env} python=3.7; \
     source ${conda_home}/bin/activate ${conda_env}; \
     echo Created and activated the conda environment ${conda_env} )
 #echo copref ${CONDA_PREFIX}
