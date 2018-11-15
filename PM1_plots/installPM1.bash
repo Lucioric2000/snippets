@@ -50,7 +50,6 @@ function conda_install(){
 	echo "Next, the Miniconda package will be downloaded and installed"
 	wget https://repo.continuum.io/miniconda/Miniconda${python_version}-latest-Linux-x86_64.sh
 	chmod +x Miniconda${python_version}-latest-Linux-x86_64.sh
-	echo "You should install Miniconda to the default path there appears"
 	sudo sh Miniconda${python_version}-latest-Linux-x86_64.sh -p ${conda_home} -u -b
 	rm Miniconda${python_version}-latest-Linux-x86_64.sh
 	#Make the updated shell path available in this session:
