@@ -57,13 +57,14 @@ function conda_install(){
     conda_env='base'
     source ${conda_home}/bin/activate ${conda_env}
 }
-condabin=`which conda &> /dev/null`
-if [ -z $condabin ]
+#condabin=`which conda &> /dev/null`
+if [ -e /srv/conda ]
 then
 	conda_home=/srv/conda
 	conda_install
 else 
-    conda_home=${condabin%/bin/conda}
+    #conda_home=${condabin%/bin/conda}
+    conda_home=/srv/conda
     echo "Conda installation found at $conda_home. Script will use that installation."
 fi
 conda_env='python37'
