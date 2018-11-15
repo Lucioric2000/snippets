@@ -123,4 +123,4 @@ hom_freq = domain_gnu + 3#+ 4
 #hemi_pos = domain_gnu + 4#+ 5
 #hemi_freq = domain_gnu + 5#+ 6
 
-plot data u het_pos:het_freq pt 2 title 'Heterozygous', data u hom_pos:hom_freq pt 3 title 'Homozygous'
+#plot data u het_pos:het_freq pt 2 title 'Heterozygous', data u hom_pos:hom_freq pt 3 title 'Homozygous'
