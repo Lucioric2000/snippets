@@ -28,7 +28,6 @@ set x2range [0:x_length]
 #unset border
 #unset ylabel
 set ytics out nomirror
-#set xtics out nomirror
 set yrange[0:total_phen_count]
 set grid
 unset y2tics
@@ -80,7 +79,7 @@ set border 1 lw 2
 set datafile missing "?"
 unset arrow
 set arrow from user_pos,-11 to user_pos,total_phen_count nohead lc rgb 'red'
-plot for [i=2:domain_gnu] data u 1:(column(i)) with lines
+#plot for [i=2:domain_gnu] data u 1:(column(i)) with lines
 
 
 set xrange [0:x_length]
@@ -113,6 +112,7 @@ set yrange [0.00001:1]
 set xlabel "Protein residue marked by red line at position ".user_pos
 set ylabel "ExAC all MAF" rotate by 0 offset -6 #exac_canon_transcript_id
 set logscale y
+unset key
 #set key horizontal inside right top #bottom right pane
 #need to feed i variable columns
 

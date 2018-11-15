@@ -28,7 +28,6 @@ set x2range [0:x_length]
 #unset border
 #unset ylabel
 set ytics out nomirror
-#set xtics out nomirror
 set yrange[0:total_phen_count]
 set grid
 unset y2tics
