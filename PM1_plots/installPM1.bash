@@ -94,5 +94,6 @@ unzip chromedriver_linux64.zip
 sudo mv chromedriver /usr/local/bin
 
 #echo "Now you are in the folder `pwd`"
-
-echo "You may execute the PM1_plotter script using, for example, the code 'python PM1_plotter.py ABCC8 123' (for the ABCC1 gene) on the subdirectory snippets/PM1_plotter."
+echo "To run PM1_plotter, you first need to activate the ${conda_env} environment, using the command source ${conda_home}/bin/activate ${conda_env}."
+echo "Then, you should change to the directory /srv/qgen/snippets/PM1_plots. On this directory, you may execute the PM1_plotter script using, "\
+"for example, the code 'python PM1_plotter.py ABCC8 123 -i' (for the ABCC1 gene, main position 123, and where the -i stands for interactive graph)"

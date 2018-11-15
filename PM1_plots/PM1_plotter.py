@@ -77,18 +77,8 @@ class Graph_object():
         if len(self.consurf_data["cons"])>0:
             self.write_consurf_data = self.write_consurf_grades(self.consurf_data)
 
-        #if kwargs.get("cut_out",False):
-        #    return
-        plotting_file=kwargs.get("plotting_file",None)
-        if plotting_file is None:
-            print('\nPlotting all data...\n')
-            if self.chrom=='X':
-                self.execute_gnuplot(gene_name, user_pos, self.chrom, hemi=True,plotting_file=plotting_file)
-            elif self.chrom=='Y':
-                self.execute_gnuplot(gene_name, user_pos, self.chrom, chrY=True,plotting_file=plotting_file)
-            else:
-                self.execute_gnuplot(gene_name, user_pos, self.chrom,plotting_file=plotting_file)
-        else:
+        input_plotting_file=kwargs.get("plotting_file",None)
+        if input_plotting_file is None:
             #HGMD##############################
             print('\nGathering HGMD data from website...')
             self.hgmd_data = self.get_HGMD_data(gene_name)             
@@ -112,9 +102,17 @@ class Graph_object():
                 self.execute_gnuplot(gene_name, user_pos, self.chrom, chrY=True)
             else:
                 self.execute_gnuplot(gene_name, user_pos, self.chrom)
-            print("Data plotted.\n")
-            #self.create_smaller_graph_file()
-            #self.execute_zoomed_gnuplot(gene_name)
+        else:
+            print('\nPlotting all data...\n')
+            if self.chrom=='X':
+                self.execute_gnuplot(gene_name, user_pos, self.chrom, hemi=True,plotting_file=input_plotting_file)
+            elif self.chrom=='Y':
+                self.execute_gnuplot(gene_name, user_pos, self.chrom, chrY=True,plotting_file=input_plotting_file)
+            else:
+                self.execute_gnuplot(gene_name, user_pos, self.chrom,plotting_file=input_plotting_file)
+        print("Data plotted.\n")
+        #self.create_smaller_graph_file()
+        #self.execute_zoomed_gnuplot(gene_name)
         
     ### Ensembl_id   ####################################################
     #required for ExAC query
@@ -334,11 +332,11 @@ class Graph_object():
     #Read composite
     def read_composite(self, filename=None, indexed=True):
         if filename is None:
-            filename=self.plotting_file#Defaulut
+            filename=self.plotting_file#Default
         if indexed:
-            df = pd.read_csv(plotting_file, delimiter='\t', index_col=0)
+            df = pd.read_csv(filename, delimiter='\t', index_col=0)
         else:
-            df = pd.read_csv(plotting_file, delimiter='\t')
+            df = pd.read_csv(filename, delimiter='\t')
         return df
     def investigate_plotting_file(self,filename):
         rc=self.read_composite(filename)
@@ -631,8 +629,7 @@ class Graph_object():
         else:
             domain_count = self.construct_gnuplot_command("domain_count", str(self.domain_count))
             domain_gnu = self.construct_gnuplot_command("domain_gnu", str(self.domain_count + 1))
-        print("xlen",x_length,domain_gnu)
-        #self.HGMD_track_count = count
+        #print("xlen",x_length,domain_gnu)
 
         # Assess how long the longest phenotype name is
         longest_phen_list = [self.longest_phen_DM, self.longest_phen_DMq]
@@ -658,8 +655,6 @@ class Graph_object():
         total_phen_count = self.construct_gnuplot_command("total_phen_count", str(self.total_phen_count))
         user_pos = self.construct_gnuplot_command("user_pos", str(self.user_pos))
         #print("tofeco",total_phen_count,DMq_phen_count,DM_phen_count)
-        #print(DM_phen_count)
-        #print(DMq_phen_count)
         if "-i" in self.extra_args or "--interactive" in self.extra_args:
             terminal="set terminal x11 persist";
         else:
@@ -743,19 +738,19 @@ if __name__ == "__main__":
         print ("Running PM1_plotter without arguments, for debug")
         gene_name="ABCC8"
         user_pos="123"
-        options=("--interactive",)
-        #options=()
+        #options=("--interactive",)
+        options=()
         #--interactive or -i makes the graph interactive
         #gobj=Graph_object("ABCC8","123",*options,cut_out=True,save_for_debug=True)
-        gobj=Graph_object(gene_name,user_pos,plotting_file="ABCC8_composite_123_JDP.data",save_for_debug=True)
-        print('\nPlotting all data...\n')
-        if gobj.chrom=='X':
-            gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom, hemi=True,plotting_file=plotting_file)
-        elif gobj.chrom=='Y':
-            gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom, chrY=True,plotting_file=plotting_file)
-        else:
-            gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom,plotting_file=plotting_file)
-        print("Data plotted.\n")
+        gobj=Graph_object(gene_name,user_pos,*options,plotting_file="ABCC8_composite_123_JDP.data",save_for_debug=True)
+        #print('\nPlotting all data...\n')
+        #if gobj.chrom=='X':
+        #    gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom, hemi=True,plotting_file=plotting_file)
+        #elif gobj.chrom=='Y':
+        #    gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom, chrY=True,plotting_file=plotting_file)
+        #else:
+        #    gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom,plotting_file=plotting_file)
+        #print("Data plotted.\n")
         #gobj.create_smaller_graph_file(plotting_file=plotting_file)
         #self.execute_zoomed_gnuplot(gene_name)
 
