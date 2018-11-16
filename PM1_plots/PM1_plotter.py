@@ -654,8 +654,7 @@ class Graph_object():
         DMq_phen_count = self.construct_gnuplot_command("DMq_phen_count", str(self.HGMD_DMq_track_count))
         total_phen_count = self.construct_gnuplot_command("total_phen_count", str(self.total_phen_count))
         user_pos = self.construct_gnuplot_command("user_pos", str(self.user_pos))
-        #print("tofeco",total_phen_count,DMq_phen_count,DM_phen_count)
-        if "-i" in self.extra_args or "--interactive" in self.extra_args:
+        if self.kwargs.get("interactive",False):
             terminal="set terminal x11 persist";
         else:
             terminal="set terminal svg background rgb 'grey90' size canvas_x, 800";
@@ -724,15 +723,12 @@ class Graph_object():
 
 import argparse
 parser = argparse.ArgumentParser(prog="python "+sys.argv[0])
+parser.add_argument("-p","--plotting_file",action="store",help="Plotting file to red the data from")
+parser.add_argument("-i","--interactive",help="Toggle to be interactive",action="store_true")
 parser.add_argument("gene_name",metavar="<gene name>",help="Gene name")
-parser.add_argument("user_position",help="User position")
-parser.add_argument("-p","--plotting_file",help="Plotting file to red the data from")
-parser.add_argument("-i","--interactive",help="Toggle to be interactive")
-#parser.add_argument("analysis",help="Type of analysis",choices=("single","tumor-normal"))
-#parser.add_argument("outputPath",help="Path where the output files will be created. If it does not exist, program will create it.")
-#parser.add_argument("readSet",help="Read set(s)",nargs="+")
-#args = parser.parse_args()
-
+parser.add_argument("user_pos",help="User position")
+args = parser.parse_args()
+print("args",args)
 if __name__ == "__main__":
     if len(sys.argv)==1:
         print ("Running PM1_plotter without arguments, for debug")
@@ -741,19 +737,10 @@ if __name__ == "__main__":
         #options=("--interactive",)
         options=()
         #--interactive or -i makes the graph interactive
-        #gobj=Graph_object("ABCC8","123",*options,cut_out=True,save_for_debug=True)
-        gobj=Graph_object(gene_name,user_pos,*options,plotting_file="ABCC8_composite_123_JDP.data",save_for_debug=True)
-        #print('\nPlotting all data...\n')
-        #if gobj.chrom=='X':
-        #    gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom, hemi=True,plotting_file=plotting_file)
-        #elif gobj.chrom=='Y':
-        #    gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom, chrY=True,plotting_file=plotting_file)
-        #else:
-        #    gobj.execute_gnuplot(gene_name, user_pos, gobj.chrom,plotting_file=plotting_file)
-        #print("Data plotted.\n")
-        #gobj.create_smaller_graph_file(plotting_file=plotting_file)
-        #self.execute_zoomed_gnuplot(gene_name)
+        #gobj=Graph_object(gene_name,user_pos,*options,plotting_file="ABCC8_composite_123_JDP.data")
+        gobj=Graph_object(**vars(args))
 
     else:
-        Graph_object(sys.argv[1], sys.argv[2], *sys.argv[3:])
+        #Graph_object(sys.argv[1], sys.argv[2], *sys.argv[3:])
+        gobj=Graph_object(**vars(args))
 chrome_driver.close()
