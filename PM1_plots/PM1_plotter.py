@@ -771,7 +771,7 @@ parser.add_argument("-d","--Demo",help="Do a demo with interactive plotting, usi
 parser.add_argument("gene_name",metavar="<gene name>",help="Gene name")
 parser.add_argument("user_pos",help="User position")
 if __name__ == "__main__":
-    if len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[2].lower() in ("--demo","-d")):
+    if len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[1].lower() in ("--demo","-d")):
         args=["ABCC8","123","-p","examples/ABCC8_composite_123_JDP.data","-i"]
         print ("Running PM1_plotter demo, which is the same of running {0} {1}".format(sys.argv[0]," ".join(args)))
         parser.print_usage()
