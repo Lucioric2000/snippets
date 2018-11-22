@@ -200,14 +200,20 @@ class Graph_object():
             if len(this_type_column)>0:
                 np_array = np.array(this_type_column, dtype=np.float)
                 arrays_to_save.append(np_array)
+            else:
+                print("Skipped",k,this_type_column)
         if len(arrays_to_save)>0:
-            result_array=np.concatenate(arrays_to_save)
+            #result_array=np.concatenate(arrays_to_save)
+            result_array = np.empty((len(arrays_to_save), int(length)))
+            for idomain in range(len(arrays_to_save)):
+                result_array[idomain,:]=arrays_to_save[idomain]
         else:
             result_array = np.empty((0, int(length)))
         with open(self.plotting_file, 'wb') as f:
             headers = '{0}'.format('\t'.join(self.uniprot_columns))
             f.write(bytes(headers, 'utf-8') + bytes('\n', 'utf-8'))
             np.savetxt(f, np.transpose(result_array), delimiter='\t')
+        print("Found the domains {0}".format(", ".join(master_dict.keys())))
         self.domain_count = len(master_dict.keys())
         return arrays_to_save
     
@@ -231,7 +237,7 @@ class Graph_object():
                     position += 1
                     if domain_range == 1:
                         this_annotation_array.append(annotation_index)
-                        this_annotation_array.append(annotation_index)
+                        #this_annotation_array.append(annotation_index)
                     else:
                         this_annotation_array.append(annotation_index)
             elif domain_count > 0:
@@ -246,17 +252,22 @@ class Graph_object():
                     position += 1
                     if domain_range == 1:
                         this_annotation_array.append(annotation_index)
-                        this_annotation_array.append(annotation_index)
+                        #this_annotation_array.append(annotation_index)
                     else:
                         this_annotation_array.append(annotation_index)
         final_interval = int(length) - position
         for i in range(final_interval):
             position += 1
             this_annotation_array.append(None)
-        if len(this_annotation_array) > position:
+        if len(this_annotation_array) == (position+1):
+            mod_annotation_array = this_annotation_array[0:position]
+            print("modnarr",mod_annotation_array[1295:1305],len(mod_annotation_array),position,len(this_annotation_array),"this_annotation_array",master_dict[key])
+            return mod_annotation_array
+        elif len(this_annotation_array) > (position+1):
             slice_amount = int((len(this_annotation_array) - position) / 2)
             start = 0 + slice_amount
             mod_annotation_array = this_annotation_array[start:-slice_amount]
+            print("modarr",mod_annotation_array,position,len(this_annotation_array),"this_annotation_array",start,slice_amount)
             return mod_annotation_array
         return this_annotation_array
 
@@ -347,25 +358,27 @@ class Graph_object():
         length=int(self.length)
         series=[]
         rows=[]
-        assert 0,(rc1,type(rc1),dir(rc1),rc.columns)
-        domains=list(range(0,self.domain_count-1))
-        for index in range(0,self.domain_count-1):
+        domains=list(range(0,self.domain_count))
+        for index in range(0,self.domain_count):
             serx=list(rc1d[index*length+0:(index+1)*length])
             series.append(serx)
         for index in range(0,length):
             row=[index+1]
             row.extend(less_1_if_not_nan(series[idom][index]) for idom in domains)
             rows.append(row)
-        rcsT=pd.DataFrame(rows,columns=rc.columns[2:])
+        #columns=["Position"]+rc.columns[0:self.domain_count]
+        columns=[""]+rc.columns[0:self.domain_count]
+        rcsT=pd.DataFrame(rows,columns=columns)
         rcsT.to_csv(domainsfilename, sep='\t', na_rep='?') 
         return rcsT
     def investigate_plotting_file(self,filename,assign_vars):
         filenameparts=os.path.splitext(filename)
-        domainsfilename=filenameparts[0]+"_domains"+filenameparts[1]
+        #domainsfilename=filenameparts[0]+"_domains"+filenameparts[1]
         rc=self.read_composite(filename)
-        rcT=self.write_domain_belonging_table(rc,domainsfilename)
+        #rcT=self.write_domain_belonging_table(rc,domainsfilename)
         if not assign_vars:
-            return domainsfilename
+            return
+            #return domainsfilename
         lastcol=rc.columns[-1]
         lastinlastcol=None
         self_listlen_HGMD_DMq_track_count=0
@@ -410,7 +423,7 @@ class Graph_object():
             self.longest_phen_DMq=0
         else:
             self.longest_phen_DMq=max(map(len,dmqphens))
-        return domainsfilename
+        #return domainsfilename
 
     ### Consurf data #################################################################
     def find_consurf_file(self, gene_name):
@@ -637,9 +650,12 @@ class Graph_object():
     def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None):
         if plotting_file is None:
             plotting_file=self.plotting_file
-            self.domains_plotting_file=self.investigate_plotting_file(plotting_file,False)
+            #self.domains_plotting_file=self.investigate_plotting_file(plotting_file,False)
+            self.investigate_plotting_file(plotting_file,False)
         else:
-            self.domains_plotting_file=self.investigate_plotting_file(plotting_file,True)
+        #    self.domains_plotting_file=self.investigate_plotting_file(plotting_file,True)
+            self.investigate_plotting_file(plotting_file,True)
+        self.domains_plotting_file=self.plotting_file
         adjusted_length = int(self.length)
         svg_name_string = gene_name + '_composite_' + user_pos + '.svg'
         svg_name = self.construct_gnuplot_command("svg_name", svg_name_string)
@@ -664,16 +680,17 @@ class Graph_object():
         if longest_phen > 60:
             # phen_name_diff multipled by 2.3, divided by 1000, added to threshold left_margin of 0.18
             set_lmargin = (((longest_phen-50)*2.3)/1000)+0.18
-            left_margin = self.construct_gnuplot_command("left_margin", str(set_lmargin))
+            left_margin = self.construct_gnuplot_command("left_margin", str(max(set_lmargin,0.25)))
         else:
-            left_margin = self.construct_gnuplot_command("left_margin", '0.18')
+            #left_margin = self.construct_gnuplot_command("left_margin", '0.18')
+            left_margin = self.construct_gnuplot_command("left_margin", '0.25')
 
         # Add logic to deal with larger amino acids
         if adjusted_length > 2500:
             set_canvas_x = ((adjusted_length-200)/4)+2500
             canvas_x = self.construct_gnuplot_command("canvas_x", str(set_canvas_x))
-        else:  # default canvas is 2000 (x-axis) by 800 (y-axis)
-            canvas_x = self.construct_gnuplot_command("canvas_x", str(2000))
+        else:  # default canvas is 2500 (x-axis) by 800 (y-axis)
+            canvas_x = self.construct_gnuplot_command("canvas_x", str(2500))
 
         DM_phen_count = self.construct_gnuplot_command("DM_phen_count", str(self.HGMD_DM_track_count))
         DMq_phen_count = self.construct_gnuplot_command("DMq_phen_count", str(self.HGMD_DMq_track_count))
@@ -755,7 +772,7 @@ parser.add_argument("gene_name",metavar="<gene name>",help="Gene name")
 parser.add_argument("user_pos",help="User position")
 if __name__ == "__main__":
     if len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[2].lower() in ("--demo","-d")):
-        args=["ABCC8","123","-p","ABCC8_composite_123_JDP.data","-i"]
+        args=["ABCC8","123","-p","examples/ABCC8_composite_123_JDP.data","-i"]
         print ("Running PM1_plotter demo, which is the same of running {0} {1}".format(sys.argv[0]," ".join(args)))
         parser.print_usage()
         args = parser.parse_args(args)
