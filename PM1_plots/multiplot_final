@@ -32,7 +32,7 @@ set grid
 unset y2tics
 set origin 0,0.7
 set size 1,0.3
-#set arrow from user_pos,-1 to user_pos,total_phen_count nohead lc rgb 'red'
+set arrow from user_pos,-1 to user_pos,total_phen_count nohead lc rgb 'red'
 # specify columns from data file for data to plot
 DM_residue = domain_gnu + 13
 DM_track = DM_residue - 2
@@ -47,10 +47,6 @@ set linestyle 1 lt rgb "black" lw 0.5 # set linestyle for frame around legend
 set key horizontal box linestyle 1 # add frame to legend
 plot data every :::::DM_phen_count+5 using DM_residue:DM_track pt 7 title 'DM' with lines smooth unique, data every :::::DMq_phen_count+5 using DMq_res:DMq_track pt 2 title 'DM?' with lines smooth unique
 # N.B. pt 2 = cross, pt 3 = star, pt 7 = filled circle
-
-#plot data u DM_residue:DM_track:ytic(DM_phen) with circles title 'DM', data u DMq_res:DMq_track:ytic(DMq_phen) title 'DM?'
-
-#plot data u 15:13:ytic(14) with points pt 2 title 'DM', data u 18:16:ytic(17) with points pt 4 title 'DMq'
 
 #Uniprot domain styles
 set style line 1 lt 4 lw 8 lc rgb 'navy'
@@ -70,18 +66,25 @@ set xtics out nomirror
 unset y2tics
 unset grid
 set ylabel 'Uniprot Domains' rotate by 0 offset -8
+set xrange [0:x_length]
+set x2range [0:x_length]
 set yrange [0:domain_count]
-set border 1 lw 2
+#set cbrange [0:domain_count]
+#set border 1 lw 2
+unset border
 set key autotitle columnhead
 set key at 2642,domain_count vertical maxrows domain_count
 #set key at 0,domain_count vertical maxrows domain_count #bottom left
 set datafile missing "?"
 unset arrow
 set arrow from user_pos,-11 to user_pos,total_phen_count nohead lc rgb 'red'
-set palette gray
-show palette
-#plot data every ::2:2:4:4 with image#with lines
-#plot for [i=2:domain_gnu] data matrix u 1:(column(i)) with image
+#set palette model HSV
+#set palette rgbformulae 3,2,2
+
+#show palette
+#show palette gradient
+#plot domainsdata u 1:2 with lines
+plot for [d = 1:domain_count] domainsdata u 1:d+2 with lines
 
 
 set xrange [0:x_length]
@@ -118,11 +121,11 @@ set logscale y
 #set key horizontal inside right top #bottom right pane
 #need to feed i variable columns
 
-het_pos = domain_gnu #+ 1
-het_freq = domain_gnu +1#+ 2
-hom_pos = domain_gnu +2#+ 3
+het_pos = domain_gnu + 0#+ 1
+het_freq = domain_gnu + 1#+ 2
+hom_pos = domain_gnu + 2#+ 3
 hom_freq = domain_gnu + 3#+ 4
 #hemi_pos = domain_gnu + 4#+ 5
 #hemi_freq = domain_gnu + 5#+ 6
 
-#plot data u het_pos:het_freq pt 2 title 'Heterozygous', data u hom_pos:hom_freq pt 3 title 'Homozygous'
+plot data u het_pos:het_freq pt 2 title 'Heterozygous', data u hom_pos:hom_freq pt 3 title 'Homozygous'

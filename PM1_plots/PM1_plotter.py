@@ -137,10 +137,6 @@ class Graph_object():
             try:
                 if entry_dict['Organism'] == 'Homo sapiens (Human)' and entry_dict['Status'] == 'reviewed':
                     human_match_list.append(entry_dict)
-                    #uniprot_revd_entry = entry_dict['Entry']
-                    #print(uniprot_revd_entry)
-                    #return uniprot_revd_entry
-                    #print(human_match_list)
             except:
                 print('Check reviewed transcript is identified:',entry_dict)
                 print(human_match_list)
@@ -169,10 +165,12 @@ class Graph_object():
             required_list = ["Repeat", "Topological domain","Domain", "Region", "Transmembrane", "DNA binding", "Motif", "Zinc finger", "Disulfide bond", "Nucleotide binding", "Coiled coil"]
             gff_objects = self.Up.parse_gff(self.all_gff_annotation, required_list)
             if len(gff_objects) <1:
+                assert 0,"No gff objects returned by {0}".format(self.all_gff_annotation)
                 sys.exit()
             else:
                 return gff_objects
-        except:
+        except Exception as exc:
+            raise exc
             print("\nNo specified domains in required list found in GFF file. \n\nCheck required_list and Uniprot gff file. Some areas of interest may need to be removed\n")
             sys.exit()
 
@@ -334,12 +332,40 @@ class Graph_object():
         if filename is None:
             filename=self.plotting_file#Default
         if indexed:
-            df = pd.read_csv(filename, delimiter='\t', index_col=0)
+            df = pd.read_csv(filename, delimiter='\t', index_col=0,na_values="?")
         else:
-            df = pd.read_csv(filename, delimiter='\t')
+            df = pd.read_csv(filename, delimiter='\t',na_values="?")
         return df
-    def investigate_plotting_file(self,filename):
+    def write_domain_belonging_table(self,rc,domainsfilename):
+        def less_1_if_not_nan(val):
+            if val=="?":
+                return "?"
+            else:
+                return val-1
+        rc1=rc.columns[0]
+        rc1d=rc[rc1]
+        length=int(self.length)
+        series=[]
+        rows=[]
+        assert 0,(rc1,type(rc1),dir(rc1),rc.columns)
+        domains=list(range(0,self.domain_count-1))
+        for index in range(0,self.domain_count-1):
+            serx=list(rc1d[index*length+0:(index+1)*length])
+            series.append(serx)
+        for index in range(0,length):
+            row=[index+1]
+            row.extend(less_1_if_not_nan(series[idom][index]) for idom in domains)
+            rows.append(row)
+        rcsT=pd.DataFrame(rows,columns=rc.columns[2:])
+        rcsT.to_csv(domainsfilename, sep='\t', na_rep='?') 
+        return rcsT
+    def investigate_plotting_file(self,filename,assign_vars):
+        filenameparts=os.path.splitext(filename)
+        domainsfilename=filenameparts[0]+"_domains"+filenameparts[1]
         rc=self.read_composite(filename)
+        rcT=self.write_domain_belonging_table(rc,domainsfilename)
+        if not assign_vars:
+            return domainsfilename
         lastcol=rc.columns[-1]
         lastinlastcol=None
         self_listlen_HGMD_DMq_track_count=0
@@ -368,7 +394,6 @@ class Graph_object():
                     else:
                         self_listlen_HGMD_DM_track_count=iline
                     break
-        #print("trks",self.HGMD_DMq_track_count,self.HGMD_DM_track_count,rc)
         dmqphens=set(rc[rc.columns[-2][0:self_listlen_HGMD_DMq_track_count]])
         dmphens=set(rc[rc.columns[-5][0:self_listlen_HGMD_DM_track_count]])
         dmphens.remove(lastinlastcol)
@@ -385,6 +410,7 @@ class Graph_object():
             self.longest_phen_DMq=0
         else:
             self.longest_phen_DMq=max(map(len,dmqphens))
+        return domainsfilename
 
     ### Consurf data #################################################################
     def find_consurf_file(self, gene_name):
@@ -576,7 +602,6 @@ class Graph_object():
         x_length = self.construct_gnuplot_command("x_length" , str(length))
         gene_name = self.construct_gnuplot_command("gene_name", gene_name)
         data = self.construct_gnuplot_command("data", self.zoomed_plot)
-        #print(data)
         if self.domain_count == 0:
             domain_count = self.coonstruct_gnuplot_command("domain_count", "1")
         else:
@@ -590,9 +615,7 @@ class Graph_object():
         # Add logic to deal with larger phenotype names and plot on a larger canvas
 
         DM_phen_count = self.construct_gnuplot_command("DM_phen_count", str(self.HGMD_DM_track_count))
-        #print(DM_phen_count)
         DMq_phen_count = self.construct_gnuplot_command("DMq_phen_count", str(self.HGMD_DMq_track_count))
-        #print(DMq_phen_count)
         total_phen_count = self.construct_gnuplot_command("total_phen_count", str(self.total_phen_count))
         user_pos = self.construct_gnuplot_command("user_pos", str(self.user_pos))
         gnuplot_command = ['gnuplot',
@@ -614,14 +637,16 @@ class Graph_object():
     def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None):
         if plotting_file is None:
             plotting_file=self.plotting_file
+            self.domains_plotting_file=self.investigate_plotting_file(plotting_file,False)
         else:
-            self.investigate_plotting_file(plotting_file)
+            self.domains_plotting_file=self.investigate_plotting_file(plotting_file,True)
         adjusted_length = int(self.length)
         svg_name_string = gene_name + '_composite_' + user_pos + '.svg'
         svg_name = self.construct_gnuplot_command("svg_name", svg_name_string)
         x_length = self.construct_gnuplot_command("x_length" , str(adjusted_length))
         gene_name = self.construct_gnuplot_command("gene_name", gene_name)
         data = self.construct_gnuplot_command("data", plotting_file)
+        domainsdata = self.construct_gnuplot_command("domainsdata", self.domains_plotting_file)
         chrom = self.construct_gnuplot_command("chrom", chrom)
         if self.domain_count == 0:
             print("No Uniprot domains to plot")
@@ -662,13 +687,13 @@ class Graph_object():
         if hemi==True or chrY==True:
             gnuplot_command = ['gnuplot',
                                '-e', "{0}".format(";".join((svg_name, gene_name, user_pos,
-                               canvas_x, left_margin, x_length, data,
+                               canvas_x, left_margin, x_length, data, domainsdata,
                                chrom, domain_count, domain_gnu, DM_phen_count,
                                DMq_phen_count, total_phen_count,terminal))),"multiplot_final_hemi"]
         else:
             gnuplot_command = ['gnuplot',
                                '-e', "{0}".format(";".join((svg_name, gene_name, user_pos,
-                               canvas_x, left_margin, x_length, data,
+                               canvas_x, left_margin, x_length, data, domainsdata,
                                chrom, domain_count, domain_gnu, DM_phen_count,
                                DMq_phen_count, total_phen_count,terminal))),"multiplot_final"]
         completedprocess=subprocess.run(gnuplot_command,shell=False)
@@ -725,22 +750,19 @@ import argparse
 parser = argparse.ArgumentParser(prog="python "+sys.argv[0])
 parser.add_argument("-p","--plotting_file",action="store",help="Plotting file to red the data from")
 parser.add_argument("-i","--interactive",help="Toggle to be interactive",action="store_true")
+parser.add_argument("-d","--Demo",help="Do a demo with interactive plotting, using data from a provided file (ABCC8_composite_123_JDP.data)",action="store_true")
 parser.add_argument("gene_name",metavar="<gene name>",help="Gene name")
 parser.add_argument("user_pos",help="User position")
-args = parser.parse_args()
-print("args",args)
 if __name__ == "__main__":
-    if len(sys.argv)==1:
-        print ("Running PM1_plotter without arguments, for debug")
-        gene_name="ABCC8"
-        user_pos="123"
-        #options=("--interactive",)
-        options=()
-        #--interactive or -i makes the graph interactive
-        #gobj=Graph_object(gene_name,user_pos,*options,plotting_file="ABCC8_composite_123_JDP.data")
+    if len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[2].lower() in ("--demo","-d")):
+        args=["ABCC8","123","-p","ABCC8_composite_123_JDP.data","-i"]
+        print ("Running PM1_plotter demo, which is the same of running {0} {1}".format(sys.argv[0]," ".join(args)))
+        parser.print_usage()
+        args = parser.parse_args(args)
         gobj=Graph_object(**vars(args))
 
     else:
+        args = parser.parse_args()
         #Graph_object(sys.argv[1], sys.argv[2], *sys.argv[3:])
         gobj=Graph_object(**vars(args))
 chrome_driver.close()

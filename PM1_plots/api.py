@@ -79,6 +79,8 @@ class Gff_object():
         self.anno_type = gff_line[2]
         self.start = gff_line[3]
         self.stop = gff_line[4]
+    def __repr__(self):
+        return f"<{self.__class__.__name__} for {self.db_annotation} {self.ID} {self.start}:{self.stop}, is a {self.anno_type}>"
 
 class Ensembl_api():
 
@@ -131,15 +133,13 @@ class Exac_api():
         ext = "/gene/" + ensembl_id
         #ext = "/gene/variants_in_gene/" + ensembl_id
         r = requests.get(self.server + ext, headers=self.json_headers)
-        #print("plog",r,self.server + ext,self.json_headers)#,"rt",r.text)
-        #json_r = r.json()
         texto=chrome_driver.execute(Command.GET,{"url":self.server + ext,"headers":self.json_headers})
 
         json_r=jsonloads_from_html(r)
         return json_r
     
     def canonical_transcript(self, ensembl_id):
-        ext = "/rest/gene/" + ensembl_id
+        #ext = "/rest/gene/" + ensembl_id
         ext = "/gene/" + ensembl_id
         r = requests.get(self.server + ext, headers=self.json_headers)
         #json_r = r.json()
@@ -151,7 +151,6 @@ class Exac_api():
         r = requests.get(self.server + ext, headers=self.json_headers)
         #json_r = r.json()
         json_r=jsonloads_from_html(r)
-        #assert 0,json_r
         return json_r
 
     # update each variant entry with het_count and hemi_count(where applicable)
