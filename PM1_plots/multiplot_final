@@ -71,11 +71,11 @@ set yrange [0:domain_count]
 #set border 1 lw 2
 unset border
 set key autotitle columnhead
-set key at 0,domain_count vertical maxrows domain_count
+set key at 0,domain_count vertical maxrows domain_count noreverse
 set datafile missing "?"
 unset arrow
 set arrow from user_pos,-11 to user_pos,total_phen_count nohead lc rgb 'red'
-set style circle radius screen 0.003
+#set style circle radius screen 0.003
 set style ellipse size graph 0.001, graph 0.003
 plot for [d = 1:domain_count] domainsdata u 1:d+1 with ellipses
 #plot for [d = 1:domain_count] domainsdata u 1:d+1 with circles

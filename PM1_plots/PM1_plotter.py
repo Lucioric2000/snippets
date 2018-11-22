@@ -768,7 +768,7 @@ parser = argparse.ArgumentParser(prog="python "+sys.argv[0])
 parser.add_argument("-p","--plotting_file",action="store",help="Plotting file to red the data from")
 parser.add_argument("-i","--interactive",help="Toggle to be interactive",action="store_true")
 parser.add_argument("-d","--Demo",help="Do a demo with interactive plotting, using data from a provided file (ABCC8_composite_123_JDP.data)",action="store_true")
-parser.add_argument("gene_name",metavar="<gene name>",help="Gene name")
+parser.add_argument("gene_name",help="Gene name")
 parser.add_argument("user_pos",help="User position")
 if __name__ == "__main__":
     if len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[1].lower() in ("--demo","-d")):
