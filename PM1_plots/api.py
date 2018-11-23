@@ -259,7 +259,8 @@ class HGMD_pro():
         login_form = mechanicalsoup.Form(login_page.soup.select_one('#login_form'))
         time.sleep(2)
         # login username and user_password required as strings
-        login_form.input({"login" : hgmd_username, "password" : hgmd_password})
+        redirect_url=redirect_url="/hgmd/pro/gene.php?gene=" + self.gene
+        login_form.input({"login" : hgmd_username, "password" : hgmd_password, "redirect_url":redirect_url})
         time.sleep(2)
         r = browser.submit(login_form, login_page.url)
         time.sleep(2)
