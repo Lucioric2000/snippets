@@ -22,7 +22,9 @@ class Graph_object():
     uniprot_columns = []
     slice_start = 0
     slice_end = 0
-	
+    longest_phen_DM=0
+    longest_phen_DMq=0
+
     def __init__(self, gene_name, user_pos, *extra_args,**kwargs):
         self.gene = gene_name
         self.user_pos = user_pos
@@ -81,7 +83,7 @@ class Graph_object():
         if input_plotting_file is None:
             #HGMD##############################
             print('\nGathering HGMD data from website...')
-            self.hgmd_data = self.get_HGMD_data(gene_name)             
+            self.hgmd_data = self.get_HGMD_data(gene_name)
             if self.DM_objs == {} and self.DM_likely_objs == {}:
                 print("No variants found in HGMD")
             elif self.DM_objs == {}:
@@ -373,9 +375,7 @@ class Graph_object():
         return rcsT
     def investigate_plotting_file(self,filename,assign_vars):
         filenameparts=os.path.splitext(filename)
-        #domainsfilename=filenameparts[0]+"_domains"+filenameparts[1]
         rc=self.read_composite(filename)
-        #rcT=self.write_domain_belonging_table(rc,domainsfilename)
         if not assign_vars:
             return
             #return domainsfilename
@@ -409,6 +409,7 @@ class Graph_object():
                     break
         dmqphens=set(rc[rc.columns[-2][0:self_listlen_HGMD_DMq_track_count]])
         dmphens=set(rc[rc.columns[-5][0:self_listlen_HGMD_DM_track_count]])
+        print("dmp",dmphens,rc,rc.columns)
         dmphens.remove(lastinlastcol)
         dmqphens.remove(lastinlastcol)
         self.HGMD_DM_track_count=self_listlen_HGMD_DM_track_count
@@ -475,14 +476,12 @@ class Graph_object():
         hgmd_username = input("\nEnter HGMD Pro licence username: ")
         hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
         all_mutations_soup = HGMD.scrape_HGMD_all_mutations(hgmd_username,hgmd_password)
+        if all_mutations_soup is None:
+            return None
+            #raise exc
         #list of objects
-        try:
-            #variant_instances = HGMD.extract_missense_nonsense(all_mutations_soup)
-            variant_instances = HGMD.extract_missense(all_mutations_soup)
-        except Exception as exc:
-            HGMD.log_and_email_htmls_with_error({"extract_missense":str(soup)},exc,"extract missense")
-            print("HTML code of the page dumped in the file error.log")      
-            raise exc
+        #variant_instances = HGMD.extract_missense_nonsense(all_mutations_soup)
+        variant_instances = HGMD.extract_missense(all_mutations_soup)
 
         #for i in variant_instances:
         #   print(i.__dict__) #returns dict of mutation class and list of objects in that class
@@ -650,10 +649,8 @@ class Graph_object():
     def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None):
         if plotting_file is None:
             plotting_file=self.plotting_file
-            #self.domains_plotting_file=self.investigate_plotting_file(plotting_file,False)
             self.investigate_plotting_file(plotting_file,False)
         else:
-        #    self.domains_plotting_file=self.investigate_plotting_file(plotting_file,True)
             self.investigate_plotting_file(plotting_file,True)
         self.domains_plotting_file=self.plotting_file
         adjusted_length = int(self.length)

@@ -263,13 +263,7 @@ class HGMD_pro():
         time.sleep(2)
         r = browser.submit(login_form, login_page.url)
         time.sleep(2)
-        try:
-            soup = self.form_finder(browser, self.gene)
-        except Exception as exc:
-            print("\nHGMD exception executed: {0}".format(traceback.format_exc()))
-            print("Check HGMD username and password are correct and try again.\nAlternatively check you are not already logged in to HGMD with a web browser:\nhttps://portal.biobase-international.com/cgi-bin/portal/login.cgi\n")
-            print("HTML code of the page dumped in the file error.log")
-            sys.exit()
+        soup = self.form_finder(browser, self.gene)
         return soup
     def log_and_email_htmls_with_error(self,htmls,error,subject):
         #SenfGrid Key for sengding mails with debug info to me
@@ -286,13 +280,13 @@ class HGMD_pro():
         error_log_h.write("Error at {0}:\n".format(time.asctime()))
         error_log_h.write(contentstr)
         error_log_h.write("\n")
+        print("HTML code of the web page got was dumped in the file error.log")
         for (htmlname,htmlcontents) in htmls.items():
             att=Attachment()
             error_log_h.write("html {0}:\n{1}\n".format(htmlname,htmlcontents))
             if isinstance(htmlcontents,str):
                 htmlcontents=htmlcontents.encode("UTF-8")
             att.content=base64.b64encode(htmlcontents).decode()
-            #att.content=htmlcontents
             att.type="text/html"
             att.filename=htmlname
             att.disposition="attachment"
@@ -303,7 +297,6 @@ class HGMD_pro():
         error_log_h.write("mail sending status body: {0}\n".format(response.body))
         error_log_h.write("======================\n")
         error_log_h.close()
-        raise error
     def email_html_for_development(self,html,subject,gene):
         #SenfGrid Key for sengding mails with debug info to me
         sendgrid_key="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"
@@ -336,10 +329,30 @@ class HGMD_pro():
             form = soup.find("form", attrs={ "action" : "all.php" })
         try:
             gene_id_element = form.find("input", attrs={"name" : "gene_id"})
+        except AttributeError as exc:
+            if exc.args==("'NoneType' object has no attribute 'find'",):
+                htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
+                subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
+                print("\nHGMD exception executed:")
+                print("Check HGMD username and password are correct and try again.\nAlternatively check you are not already logged in to HGMD with a web browser:\nhttps://portal.biobase-international.com/cgi-bin/portal/login.cgi\n")
+                #print("HTML code of the web page got was dumped in the file error.log")
+                self.log_and_email_htmls_with_error(htmls,exc,subject)
+                sys.exit()
+                #return None
+            else:
+                htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
+                subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
+                print("\nThe following execption occured while executing the HGMD results HTML: {0}".format(traceback.format_exc()))
+                #print("HTML code dumped in the file error.log")
+                self.log_and_email_htmls_with_error(htmls,exc,subject)
+                raise exc
         except Exception as exc:
             htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
             subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
+            print("\nThe following execption occured while executing the HGMD results HTML: {0}".format(traceback.format_exc()))
+            #print("HTML code dumped in the file error.log")
             self.log_and_email_htmls_with_error(htmls,exc,subject)
+            raise exc
         gene_id_value = gene_id_element['value']
         trans_element = form.find("input", attrs={"name" : "refcore"})
         HGMD_transcript_id = trans_element['value']
