@@ -38,6 +38,8 @@ class Uniprot_api():
                 entry_list = entry.split('\t')
                 if entry_list != headers:
                     dict_entry_list.append(dict(zip(headers, entry_list)))
+        if not os.path.isdir("save"):
+        	os.mkdir("save")
         with open("save/ensembl_{0}.html".format(ensembl_id),"w") as opf:
             opf.write(r.text)
         return dict_entry_list
