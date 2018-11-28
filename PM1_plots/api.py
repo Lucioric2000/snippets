@@ -1,4 +1,4 @@
-import requests, json, sys, re, time, mechanicalsoup, fnmatch, traceback, sendgrid, base64
+import requests, json, sys, os, re, time, mechanicalsoup, fnmatch, traceback, sendgrid, base64
 from sendgrid.helpers.mail import Email, Content, Mail, Attachment
 from bs4 import BeautifulSoup
 from selenium import webdriver
