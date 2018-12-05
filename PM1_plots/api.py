@@ -114,13 +114,22 @@ def jsonloads_from_html(request):
         bs=BeautifulSoup(request.text,"html.parser")
         scripts=bs.find_all("script")
         jsondict={}
-        for script in scripts:
+        exceptions=[]
+        for (iscript,script) in enumerate(scripts):
+            print("executing JS script #",iscript+1)
             if script.string is None:
                 continue
             assert len(script.contents)==1
             chrome_driver.execute_script(script.contents[0])
-            jsondict=chrome_driver.execute_script("return {'gene':gene,'transcript':transcript};")
-            return jsondict#For now only parse the first script tag
+            try:
+                jsondict=chrome_driver.execute_script("return {'gene':gene,'transcript':transcript};")
+            except Exception as exc:
+                exceptions.append(exc)
+            else:
+                print("jsondict")
+                return jsondict
+        else:
+            assert 0,exceptions
     return jsondict
                 
 class Exac_api():
