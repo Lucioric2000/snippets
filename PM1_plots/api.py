@@ -365,7 +365,7 @@ class HGMD_pro():
         response = browser.post(url, data=params)
         time.sleep(0.5)
         soup = BeautifulSoup(response.content,features="lxml")
-        self.email_html_for_development(soup,"PM1_plotter: Gene page {0} for debug".format(gene),gene)
+        self.email_html_for_development(str(soup),"PM1_plotter: Gene page {0} for debug".format(gene),gene)
         response.close()
         return soup
         
