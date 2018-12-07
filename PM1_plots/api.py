@@ -264,18 +264,40 @@ class HGMD_pro():
         self.gene = gene_name
 
     def scrape_HGMD_all_mutations(self,hgmd_username,hgmd_password):
-        browser = mechanicalsoup.Browser()
-        login_page = browser.get("http://portal.biobase-international.com/cgi-bin/portal/login.cgi")
+        redirect_url="/hgmd/pro/gene.php?gene=" + self.gene
+        #parameters={"login" : hgmd_username, "password" : hgmd_password, "redirect_url":redirect_url,"sid":"","flogin":"","ipflag":"","signin":"Sign in"}
+        parameters={"login" : hgmd_username, "password" : hgmd_password}
+        print("params",parameters)
+        #browser = mechanicalsoup.Browser()
+        browser = mechanicalsoup.StatefulBrowser()
+        login_page_or_contents = browser.open("http://portal.biobase-international.com"+redirect_url)
         time.sleep(2)
-        login_form = mechanicalsoup.Form(login_page.soup.select_one('#login_form'))
-        time.sleep(2)
-        # login username and user_password required as strings
-        redirect_url=redirect_url="/hgmd/pro/gene.php?gene=" + self.gene
-        login_form.input({"login" : hgmd_username, "password" : hgmd_password, "redirect_url":redirect_url})
-        time.sleep(2)
-        r = browser.submit(login_form, login_page.url)
-        time.sleep(2)
-        soup = self.form_finder(browser, self.gene)
+        soup = BeautifulSoup(login_page_or_contents.content,features="lxml")
+        redirects_to_login_page=False
+        noscripts=soup.find_all("noscript")
+        extra_args={"access_attempt":login_page_or_contents.content}
+        extra_args={"access_attempt0":login_page_or_contents.content}
+        for (inscp,nscp) in enumerate(noscripts):
+            print("nscp",inscp,nscp)
+            redirects_to_login_page=True
+        if redirects_to_login_page:
+            login_page = browser.open("http://portal.biobase-international.com/cgi-bin/portal/login.cgi?redirect_url="+redirect_url)
+            time.sleep(2)
+            form = soup.find("form", attrs={ "action" : "all.php" })
+            #oldr=login_page_or_contents.content
+            login_form=browser.select_form('#login_form')
+            time.sleep(2)
+            # login username and user_password required as strings
+            login_form.set_input(parameters)
+            login_form.choose_submit("signin")
+            login_form.print_summary()
+            time.sleep(2)
+            r = browser.submit_selected()
+            time.sleep(2)
+            #extra_args["oldr"]=oldr
+            extra_args["loginpage"]=login_page.content
+            extra_args["access_attempt"]=r.content
+        soup = self.form_finder(browser, self.gene,extra_args)
         return soup
     def log_and_email_htmls_with_error(self,htmls,error,subject):
         #SenfGrid Key for sengding mails with debug info to me
@@ -327,42 +349,42 @@ class HGMD_pro():
         att.disposition="attachment"
         mail.add_attachment(att)
         response = sg.client.mail.send.post(request_body=mail.get())
+        time.sleep(2)
 
       
-    def form_finder(self, browser, gene):
-        gene_search = browser.get("https://portal.biobase-international.com/hgmd/pro/gene.php?gene=" + gene)
-        time.sleep(0.5)
-        soup = BeautifulSoup(gene_search.content,features="lxml")
+    def form_finder(self, browser, gene,extra_args):
+        soup = BeautifulSoup(extra_args["access_attempt"],features="lxml")
         form = soup.find("form", attrs={ "action" : "all.php" })
+        #htmls={"soup_{0}.html".format(gene):str(soup)}
+        htmls={}
+        htmls.update(extra_args)
         if form is None:
-            gene_search_2=browser.get("https://portal.biobase-international.com/cgi-bin/portal/login.cgi?redirect_url=/hgmd/pro/gene.php?gene=" + gene)
-            time.sleep(0.5)
-            soup = BeautifulSoup(gene_search_2.content,features="lxml")
-            form = soup.find("form", attrs={ "action" : "all.php" })
+            gene_search_2=browser.open("https://portal.biobase-international.com/hgmd/pro/gene.php?gene=" + gene)
+            time.sleep(10)
+            soup2 = BeautifulSoup(gene_search_2.content,features="lxml")
+            form = soup2.find("form", attrs={ "action" : "all.php" })
+            htmls["soup2_{0}.html".format(gene)]=str(soup2)
         try:
             gene_id_element = form.find("input", attrs={"name" : "gene_id"})
         except AttributeError as exc:
             if exc.args==("'NoneType' object has no attribute 'find'",):
-                htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
+                htmls["gene_search2_{0}.html".format(gene)]=gene_search_2.content
                 subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
                 print("\nHGMD exception executed:")
                 print("Check HGMD username and password are correct and try again.\nAlternatively check you are not already logged in to HGMD with a web browser:\nhttps://portal.biobase-international.com/cgi-bin/portal/login.cgi\n")
-                #print("HTML code of the web page got was dumped in the file error.log")
                 self.log_and_email_htmls_with_error(htmls,exc,subject)
                 sys.exit()
                 #return None
             else:
-                htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
+                htmls["gene_search2_{0}.html".format(gene)]=gene_search_2.content
                 subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
                 print("\nThe following execption occured while executing the HGMD results HTML: {0}".format(traceback.format_exc()))
-                #print("HTML code dumped in the file error.log")
                 self.log_and_email_htmls_with_error(htmls,exc,subject)
                 raise exc
         except Exception as exc:
-            htmls={"gene_search_{0}.html".format(gene):gene_search.content,"soup_{0}.html".format(gene):str(soup)}
+            #htmls["gene_search_{0}.html".format(gene)]=gene_search.content
             subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
             print("\nThe following execption occured while executing the HGMD results HTML: {0}".format(traceback.format_exc()))
-            #print("HTML code dumped in the file error.log")
             self.log_and_email_htmls_with_error(htmls,exc,subject)
             raise exc
         gene_id_value = gene_id_element['value']

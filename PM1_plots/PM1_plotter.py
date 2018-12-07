@@ -473,8 +473,10 @@ class Graph_object():
 ### HGMD data  ###################################################################
     def get_HGMD_data(self, gene_name):
         HGMD = HGMD_pro(gene_name)
-        hgmd_username = input("\nEnter HGMD Pro licence username: ")
-        hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
+        #hgmd_username = input("\nEnter HGMD Pro licence username: ")
+        #hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
+        hgmd_username ="sdadsfs"
+        hgmd_password ="ghfhhfghf"
         all_mutations_soup = HGMD.scrape_HGMD_all_mutations(hgmd_username,hgmd_password)
         if all_mutations_soup is None:
             return None
