@@ -87,10 +87,10 @@ class Graph_object():
             if self.DM_objs == {} and self.DM_likely_objs == {}:
                 print("No variants found in HGMD")
             elif self.DM_objs == {}:
-                print("dnprim")
+                #print("dnprim")
                 self.write_DM_data2 = self.write_HGMD_data(self.DM_likely_objs, DM=False)
             else:
-                print("dmseg")
+                #print("dmseg")
                 self.write_DM_data = self.write_HGMD_data(self.DM_objs)
                 self.write_DM_data2 = self.write_HGMD_data(self.DM_likely_objs, DM=False)
 
@@ -99,19 +99,19 @@ class Graph_object():
             #GNU plotter#######################
             print('\nPlotting all data...\n')
             if self.chrom=='X':
-                self.execute_gnuplot(gene_name, user_pos, self.chrom, hemi=True)
+                self.execute_gnuplots(gene_name, user_pos, self.chrom, hemi=True)
             elif self.chrom=='Y':
-                self.execute_gnuplot(gene_name, user_pos, self.chrom, chrY=True)
+                self.execute_gnuplots(gene_name, user_pos, self.chrom, chrY=True)
             else:
-                self.execute_gnuplot(gene_name, user_pos, self.chrom)
+                self.execute_gnuplots(gene_name, user_pos, self.chrom)
         else:
             print('\nPlotting all data...\n')
             if self.chrom=='X':
-                self.execute_gnuplot(gene_name, user_pos, self.chrom, hemi=True,plotting_file=input_plotting_file)
+                self.execute_gnuplots(gene_name, user_pos, self.chrom, hemi=True,plotting_file=input_plotting_file)
             elif self.chrom=='Y':
-                self.execute_gnuplot(gene_name, user_pos, self.chrom, chrY=True,plotting_file=input_plotting_file)
+                self.execute_gnuplots(gene_name, user_pos, self.chrom, chrY=True,plotting_file=input_plotting_file)
             else:
-                self.execute_gnuplot(gene_name, user_pos, self.chrom,plotting_file=input_plotting_file)
+                self.execute_gnuplots(gene_name, user_pos, self.chrom,plotting_file=input_plotting_file)
         print("Data plotted.\n")
         #self.create_smaller_graph_file()
         #self.execute_zoomed_gnuplot(gene_name)
@@ -263,13 +263,13 @@ class Graph_object():
             this_annotation_array.append(None)
         if len(this_annotation_array) == (position+1):
             mod_annotation_array = this_annotation_array[0:position]
-            print("modnarr",mod_annotation_array[1295:1305],len(mod_annotation_array),position,len(this_annotation_array),"this_annotation_array",master_dict[key])
+            #print("modnarr",mod_annotation_array[1295:1305],len(mod_annotation_array),position,len(this_annotation_array),"this_annotation_array",master_dict[key])
             return mod_annotation_array
         elif len(this_annotation_array) > (position+1):
             slice_amount = int((len(this_annotation_array) - position) / 2)
             start = 0 + slice_amount
             mod_annotation_array = this_annotation_array[start:-slice_amount]
-            print("modarr",mod_annotation_array,position,len(this_annotation_array),"this_annotation_array",start,slice_amount)
+            #print("modarr",mod_annotation_array,position,len(this_annotation_array),"this_annotation_array",start,slice_amount)
             return mod_annotation_array
         return this_annotation_array
 
@@ -409,7 +409,7 @@ class Graph_object():
                     break
         dmqphens=set(rc[rc.columns[-2][0:self_listlen_HGMD_DMq_track_count]])
         dmphens=set(rc[rc.columns[-5][0:self_listlen_HGMD_DM_track_count]])
-        print("dmp",dmphens,rc,rc.columns)
+        #print("dmp",dmphens,rc,rc.columns)
         dmphens.remove(lastinlastcol)
         dmqphens.remove(lastinlastcol)
         self.HGMD_DM_track_count=self_listlen_HGMD_DM_track_count
@@ -473,10 +473,10 @@ class Graph_object():
 ### HGMD data  ###################################################################
     def get_HGMD_data(self, gene_name):
         HGMD = HGMD_pro(gene_name)
-        #hgmd_username = input("\nEnter HGMD Pro licence username: ")
-        #hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
-        hgmd_username ="sdadsfs"
-        hgmd_password ="ghfhhfghf"
+        hgmd_username = input("\nEnter HGMD Pro licence username: ")
+        hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
+        #hgmd_username ="sdadsfs"
+        #hgmd_password ="ghfhhfghf"
         all_mutations_soup = HGMD.scrape_HGMD_all_mutations(hgmd_username,hgmd_password)
         if all_mutations_soup is None:
             return None
@@ -648,7 +648,13 @@ class Graph_object():
         subprocess.call(gnuplot_command)
         
     #call gnuplot script
-    def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None):
+    def execute_gnuplots(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None):
+        if self.kwargs.get("interactive",False):
+            #In case it is an self.kwargs["interactive"]==True, the program also does an interactive plot
+            #The interactive plot needs 
+            self.execute_gnuplot(gene_name,user_pos,chrom,hemi=hemi,chrY=chrY,plotting_file=plotting_file,interactive=True)
+        self.execute_gnuplot(gene_name,user_pos,chrom,hemi=hemi,chrY=chrY,plotting_file=plotting_file,interactive=False)
+    def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None, interactive=False):
         if plotting_file is None:
             plotting_file=self.plotting_file
             self.investigate_plotting_file(plotting_file,False)
@@ -695,23 +701,23 @@ class Graph_object():
         DMq_phen_count = self.construct_gnuplot_command("DMq_phen_count", str(self.HGMD_DMq_track_count))
         total_phen_count = self.construct_gnuplot_command("total_phen_count", str(self.total_phen_count))
         user_pos = self.construct_gnuplot_command("user_pos", str(self.user_pos))
-        if self.kwargs.get("interactive",False):
+        if interactive:
             terminal="set terminal x11 persist";
+            commands_list=[svg_name]
         else:
             terminal="set terminal svg background rgb 'grey90' size canvas_x, 800";
+            commands_list=[svg_name]
+        commands_list.extend((gene_name, user_pos,
+                               canvas_x, left_margin, x_length, data, domainsdata,
+                               chrom, domain_count, domain_gnu, DM_phen_count,
+                               DMq_phen_count, total_phen_count,terminal))
 
         if hemi==True or chrY==True:
             gnuplot_command = ['gnuplot',
-                               '-e', "{0}".format(";".join((svg_name, gene_name, user_pos,
-                               canvas_x, left_margin, x_length, data, domainsdata,
-                               chrom, domain_count, domain_gnu, DM_phen_count,
-                               DMq_phen_count, total_phen_count,terminal))),"multiplot_final_hemi"]
+                               '-e', "{0}".format(";".join(commands_list)),"multiplot_final_hemi"]
         else:
             gnuplot_command = ['gnuplot',
-                               '-e', "{0}".format(";".join((svg_name, gene_name, user_pos,
-                               canvas_x, left_margin, x_length, data, domainsdata,
-                               chrom, domain_count, domain_gnu, DM_phen_count,
-                               DMq_phen_count, total_phen_count,terminal))),"multiplot_final"]
+                               '-e', "{0}".format(";".join((commands_list))),"multiplot_final"]
         completedprocess=subprocess.run(gnuplot_command,shell=False)
         print("completed_process:",completedprocess)
 
