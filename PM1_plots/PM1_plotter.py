@@ -649,10 +649,10 @@ class Graph_object():
         
     #call gnuplot script
     def execute_gnuplots(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None):
-        if self.kwargs.get("interactive",False):
+        #if self.kwargs.get("interactive",False):
             #In case it is an self.kwargs["interactive"]==True, the program also does an interactive plot
             #The interactive plot needs 
-            self.execute_gnuplot(gene_name,user_pos,chrom,hemi=hemi,chrY=chrY,plotting_file=plotting_file,interactive=True)
+        self.execute_gnuplot(gene_name,user_pos,chrom,hemi=hemi,chrY=chrY,plotting_file=plotting_file,interactive=True)
         self.execute_gnuplot(gene_name,user_pos,chrom,hemi=hemi,chrY=chrY,plotting_file=plotting_file,interactive=False)
     def execute_gnuplot(self, gene_name, user_pos, chrom, hemi=False, chrY=False,plotting_file=None, interactive=False):
         if plotting_file is None:
@@ -771,13 +771,13 @@ class Graph_object():
 import argparse
 parser = argparse.ArgumentParser(prog="python "+sys.argv[0])
 parser.add_argument("-p","--plotting_file",action="store",help="Plotting file to red the data from")
-parser.add_argument("-i","--interactive",help="Toggle to be interactive",action="store_true")
+#parser.add_argument("-i","--interactive",help="Toggle to be interactive",action="store_true")
 parser.add_argument("-d","--Demo",help="Do a demo with interactive plotting, using data from a provided file (ABCC8_composite_123_JDP.data)",action="store_true")
 parser.add_argument("gene_name",help="Gene name")
 parser.add_argument("user_pos",help="User position")
 if __name__ == "__main__":
     if len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[1].lower() in ("--demo","-d")):
-        args=["ABCC8","123","-p","examples/ABCC8_composite_123_JDP.data","-i"]
+        args=["ABCC8","123","-p","examples/ABCC8_composite_123_JDP.data"]
         print ("Running PM1_plotter demo, which is the same of running {0} {1}".format(sys.argv[0]," ".join(args)))
         parser.print_usage()
         args = parser.parse_args(args)
