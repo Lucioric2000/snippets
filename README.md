@@ -40,3 +40,14 @@ This is in line with the ACGS variant interpretation guidlines description of po
 Note - It was written as part of a trainee project and although it produces a useful plot, there is much scope for development in terms of code structure,
 the data included as well as visualisation.
 
+To install or updated PM1_plotter, you should execute the following commands:
+1. cd /srv/qgen/snippets/PM1_plots
+2. ./installPM1.bash
+3. source activate python37
+
+If you had installed or updated PM1_plottr, you should execute the following commands before running PM1_plotter:
+1. cd /srv/qgen/snippets/PM1_plots
+2. source activate python37
+
+To run PM1_plotter, you should execute, for instance:
+python PM1_plotter.py ABCC8 123
