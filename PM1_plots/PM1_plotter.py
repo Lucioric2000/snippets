@@ -75,7 +75,6 @@ class Graph_object():
         except:
             self.consurf_file = "no_file"
         self.consurf_data = self.parse_consurf_grades(self.consurf_file, self.length)
-        #print("consurffile",self.consurf_file,gene_name,self.consurf_data,"chrom",self.chrom,type(self.chrom))
         if len(self.consurf_data["cons"])>0:
             self.write_consurf_data = self.write_consurf_grades(self.consurf_data)
 
@@ -473,11 +472,16 @@ class Graph_object():
 ### HGMD data  ###################################################################
     def get_HGMD_data(self, gene_name):
         HGMD = HGMD_pro(gene_name)
-        hgmd_username = input("\nEnter HGMD Pro licence username: ")
-        hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
-        #hgmd_username ="sdadsfs"
-        #hgmd_password ="ghfhhfghf"
-        all_mutations_soup = HGMD.scrape_HGMD_all_mutations(hgmd_username,hgmd_password)
+        savefilename="save/HGMD_all_{0}.html".format(gene_name)
+        if os.path.exists(savefilename):
+            all_mutations_soup= HGMD.opensaved(savefilename,gene_name)
+        else:
+
+            hgmd_username = input("\nEnter HGMD Pro licence username: ")
+            hgmd_password = getpass.getpass(prompt="Enter HGMD Pro licence password (hidden): ")
+            #hgmd_username ="sdadsfs"
+            #hgmd_password ="ghfhhfghf"
+            all_mutations_soup = HGMD.scrape_HGMD_all_mutations(hgmd_username,hgmd_password)
         if all_mutations_soup is None:
             return None
             #raise exc

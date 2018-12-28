@@ -118,7 +118,7 @@ def jsonloads_from_html(request):
         for (iscript,script) in enumerate(scripts):
             if script.string is None:
                 continue
-            print("executing JS script #",iscript+1)
+            #print("executing JS script #",iscript+1)
             assert len(script.contents)==1
             chrome_driver.execute_script(script.contents[0])
             try:
@@ -126,7 +126,7 @@ def jsonloads_from_html(request):
             except Exception as exc:
                 exceptions.append(exc)
             else:
-                print("jsondict")
+                #print("jsondict")
                 return jsondict
         else:
             assert 0,exceptions
@@ -264,10 +264,12 @@ class HGMD_pro():
         self.gene = gene_name
 
     def scrape_HGMD_all_mutations(self,hgmd_username,hgmd_password):
+        #savefilename="save/HGMD_all_{0}.html".format(self.gene)
+        #if os.path.exists(savefilename):
+        #    return self.opensaved(savefilename,self.gene)
         redirect_url="/hgmd/pro/gene.php?gene=" + self.gene
         #parameters={"login" : hgmd_username, "password" : hgmd_password, "redirect_url":redirect_url,"sid":"","flogin":"","ipflag":"","signin":"Sign in"}
         parameters={"login" : hgmd_username, "password" : hgmd_password}
-        #print("params",parameters)
         browser = mechanicalsoup.StatefulBrowser()
         login_page_or_contents = browser.open("http://portal.biobase-international.com"+redirect_url)
         time.sleep(2)
@@ -310,8 +312,7 @@ class HGMD_pro():
             time.sleep(2)
             extra_args["loginpage"]=login_page.content
             extra_args["access_attempt"]=r.content
-        soup = self.form_finder(browser, self.gene,extra_args)
-        return soup
+        return self.form_finder(browser, self.gene,extra_args)
     def log_and_email_htmls_with_error(self,htmls,error,subject):
         #SenfGrid Key for sengding mails with debug info to me
         sendgrid_key="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"
@@ -364,6 +365,15 @@ class HGMD_pro():
         response = sg.client.mail.send.post(request_body=mail.get())
         time.sleep(2)
 
+    def opensaved(self,filename,gene):
+        sfh=open(filename,"r")
+        sfhc=sfh.read()
+        soupx = BeautifulSoup(sfhc,features="lxml")
+        form = soupx.find("form", attrs={ "action" : "all.php" })
+        #htmls["soupx_{0}.html".format(gene)]=str(soupx)
+        #gene_id_element = form.find("input", attrs={"name" : "gene_id"})
+        sfh.close()
+        return soupx
       
     def form_finder(self, browser, gene,extra_args):
         soup = BeautifulSoup(extra_args["access_attempt"],features="lxml")
@@ -385,15 +395,7 @@ class HGMD_pro():
                 savefilename="save/HGMD_all_{0}.html".format(gene)
                 if os.path.exists(savefilename):
                     #fileurl="file:///{0}".format(os.path.join(os.path.dirname(__file__),savefilename))
-                    sfh=open(savefilename,"r")
-                    sfhc=sfh.read()
-                    soupx = BeautifulSoup(sfhc,features="lxml")
-                    form = soupx.find("form", attrs={ "action" : "all.php" })
-                    htmls["soupx_{0}.html".format(gene)]=str(soupx)
-                    #gene_id_element = form.find("input", attrs={"name" : "gene_id"})
-                    sfh.close()
-                    #source_was_web=False
-                    return soupx
+                    return self.opensaved(savefilename,gene)
                 else:
                     htmls["gene_search2_{0}.html".format(gene)]=gene_search_2.content
                     subject = "PM1_plotter Error: Gene page {0} for debug".format(gene)
